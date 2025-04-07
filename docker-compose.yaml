@@ -1,0 +1,36 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules  # Evita que se sobreescriba node_modules
+    depends_on:
+      - sqlserver
+    environment:
+      - DB_HOST=sqlserver
+      - DB_USER=sa
+      - DB_PASSWORD=Geraxuful0415**
+      - DB_NAME=Itam
+      - DB_PORT=1433
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true  # 👈 necesario para que el watch funcione en Docker
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      SA_PASSWORD: "Geraxuful0415**"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"

@@ -1,0 +1,30 @@
+# Ignorar dependencias locales
+node_modules
+**/node_modules
+
+# Ignorar logs
+*.log
+npm-debug.log*
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Archivos de entorno
+.env
+.env.*
+
+# Build de React
+build
+dist
+
+# VSCode y otros editores
+.vscode
+.idea
+
+# Dockerfile / docker-compose generados
+docker-compose.override.yml

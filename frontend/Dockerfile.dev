@@ -1,0 +1,14 @@
+# Usa una imagen base de Node
+FROM node:18
+# Setea el directorio de trabajo
+WORKDIR /app
+# Copia los archivos
+COPY package*.json ./
+# Instala dependencias
+RUN npm install
+# Copia el resto del código
+COPY . .
+# Expon el puerto de desarrollo
+EXPOSE 3000 
+# Corre la app en modo desarrollo
+CMD ["npm", "start"]
