@@ -1,8 +1,10 @@
 const express = require('express');
 const sql = require('mssql');
+const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
+app.use(cors());
 const port = 5000;
 
 // Middleware
@@ -33,6 +35,7 @@ app.get('/', async (req, res) => {
   }
 });
 
+//Get de Usuarios
 app.get('/usuarios', async (req, res) => {
   try {
     await sql.connect(config);
@@ -44,24 +47,50 @@ app.get('/usuarios', async (req, res) => {
   }
 });
 
-app.post('/add/activo', async (req, res) => {
+//Get de Activos
+app.get('/activos', async (req, res) => {
   try {
-    const activoNuevo = req.body;
-    console.log('Datos recibidos:', activoNuevo);
-    if (!activoNuevo.Nombre || !activoNuevo.Marca || !activoNuevo.Modelo || !activoNuevo.NumeroSerie || !activoNuevo.Ubicacion || !activoNuevo.Departamento || !activoNuevo.UsuarioAsignado || !activoNuevo.FechaAdquisicion || !activoNuevo.FechaExpiracion || !activoNuevo.Proveedor || !activoNuevo.Costo) {
-      return res.status(400).json({ error: 'Faltan campos obligatorios en la solicitud.' });
-    }
     await sql.connect(config);
-    const result = await sql.query`
-      INSERT INTO Activos (Nombre, Marca, Modelo, NumeroSerie, Ubicacion, Departamento, UsuarioAsignado, FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones, Estatus)
-      VALUES (${activoNuevo.Nombre}, ${activoNuevo.Marca}, ${activoNuevo.Modelo}, ${activoNuevo.NumeroSerie}, ${activoNuevo.Ubicacion}, ${activoNuevo.Departamento}, ${activoNuevo.UsuarioAsignado}, ${activoNuevo.FechaAdquisicion}, ${activoNuevo.FechaExpiracion}, ${activoNuevo.Proveedor}, ${activoNuevo.Costo}, ${activoNuevo.Observaciones}, 'ACTIVE');
-    `;
-    res.status(200).json({ message: 'Activo insertado correctamente' });
+    const result = await sql.query('SELECT * FROM Activos');
+    res.send(result.recordset);
   } catch (err) {
     console.error('Error al conectar a la base de datos:', err);
     res.status(500).send('Error de conexión a SQL Server');
   }
 });
+
+//Post de Activos
+app.post('/api/activo', async (req, res) => {
+  const {
+    Nombre, Marca, Modelo, NumeroSerie,
+    Ubicacion, Departamento, UsuarioAsignado,
+    FechaAdquisicion, Proveedor, Costo, Observaciones
+  } = req.body;
+
+  try {
+    await sql.connect(config)
+    await sql.query`
+      INSERT INTO Activos (
+        Nombre, Marca, Modelo, NumeroSerie,
+        Ubicacion, Departamento, UsuarioAsignado,
+        FechaAdquisicion, Proveedor, Costo, Observaciones
+      )
+      VALUES (
+        ${Nombre}, ${Marca}, ${Modelo}, ${NumeroSerie},
+        ${Ubicacion}, ${Departamento}, ${UsuarioAsignado},
+        ${FechaAdquisicion}, ${Proveedor}, ${Costo}, ${Observaciones}
+      )
+    `;
+
+    res.status(201).json({ message: '✅ Insertado con éxito' });
+  } catch (error) {
+    console.error('Error al insertar equipo:', error);
+    res.status(500).json({ message: 'Error al insertar equipo' });
+  } finally {
+    sql.close(); // Cierra la conexión después de cada request
+  }
+});
+
 
 // Arrancar el servidor
 app.listen(port, () => {
