@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function FormularioEquipos() {
+const FormularioEquipos = ({onClose}) => {
   const [formData, setFormData] = useState({
     Nombre: '',
     Marca: '',
@@ -68,7 +68,13 @@ export default function FormularioEquipos() {
           required={field !== 'Observaciones'}
         />
       ))}
-      <button type="submit">Registrar Equipo</button>
+      <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+        <button type="submit">Registrar Equipo</button>
+        <button onClick={onClose}>Cancelar</button>
+      </div>
     </form>
   );
 }
+
+
+export default FormularioEquipos;

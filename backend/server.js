@@ -47,17 +47,60 @@ app.get('/usuarios', async (req, res) => {
   }
 });
 
-//Get de Activos
+// GET /activos adaptado a React Admin
 app.get('/activos', async (req, res) => {
   try {
     await sql.connect(config);
-    const result = await sql.query('SELECT * FROM Activos');
+
+    // Parsear parámetros de React Admin
+    const filter = req.query.filter ? JSON.parse(req.query.filter) : {};
+    const range = req.query.range ? JSON.parse(req.query.range) : [0, 9];
+    const sort = req.query.sort ? JSON.parse(req.query.sort) : ['id', 'ASC'];
+
+    const offset = range[0];
+    const limit = range[1] - range[0] + 1;
+
+    let baseQuery = `SELECT * FROM Activos`;
+    const condiciones = [];
+    const ps = new sql.PreparedStatement();
+
+    // Filtros dinámicos
+    for (const campo in filter) {
+      ps.input(campo, sql.VarChar);
+      condiciones.push(`${campo} LIKE '%' + @${campo} + '%'`);
+    }
+
+    if (condiciones.length > 0) {
+      baseQuery += ' WHERE ' + condiciones.join(' AND ');
+    }
+
+    // Ordenamiento
+    baseQuery += ` ORDER BY ${sort[0]} ${sort[1]}`;
+
+    // Paginación (usando OFFSET-FETCH para SQL Server)
+    baseQuery += ` OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY`;
+
+    await ps.prepare(baseQuery);
+    const result = await ps.execute(filter);
+    await ps.unprepare();
+
+    // Total de registros (para React Admin)
+    const totalQuery = `SELECT COUNT(*) as total FROM Activos`;
+    const totalResult = await sql.query(totalQuery);
+    const total = totalResult.recordset[0].total;
+
+    // Headers necesarios para paginación en React Admin
+    res.setHeader('Content-Range', `activos ${range[0]}-${range[1]}/${total}`);
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
+
     res.send(result.recordset);
   } catch (err) {
-    console.error('Error al conectar a la base de datos:', err);
-    res.status(500).send('Error de conexión a SQL Server');
+    console.error('Error al obtener activos:', err);
+    res.status(500).send('Error en el servidor');
   }
 });
+
+
 
 //Post de Activos
 app.post('/api/activo', async (req, res) => {
