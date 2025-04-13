@@ -1,6 +1,6 @@
 import { fetchUtils } from "react-admin";
 
-const apiUrl = "/";
+const apiUrl = "http://localhost:5000";
 const httpClient = fetchUtils.fetchJson;
 
 export const provider = {
@@ -28,5 +28,43 @@ export const provider = {
     };
   },
 
-  // Puedes agregar otros métodos como getOne, create, update, delete, etc.
+  //Métodos
+  getOne: async (resource, params) => {
+    const url = `${apiUrl}/${resource}/${params.id}`;
+    const { json } = await httpClient(url);
+  
+    return {
+      data: {
+        ...json,
+        id: json.id // adaptá esto según cómo venga tu campo de ID
+      },
+    };
+  },
+  //Crear activo
+  create: async (resource, params) => {
+    const url = `${apiUrl}/api/${resource}`;
+    const options = {
+      method: "POST",
+      body: JSON.stringify(params.data),
+    };
+
+    const { json } = await httpClient(url, options);
+
+    return {
+      data: { ...params.data, id: json.id }, // asegurate que el backend devuelva el id creado
+    };
+  },
+
+  update: async (resource, params) => {
+    let url = `${apiUrl}/${resource}/${params.id}`;
+    const { json } = await httpClient(url, {
+      method: 'PUT',
+      body: JSON.stringify(params.data),
+    });
+  
+    return {
+      data: json || params.data, // si tu backend no responde con data, al menos devolvemos la enviada
+    };
+  }
+  
 };

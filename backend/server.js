@@ -67,7 +67,7 @@ app.get('/activos', async (req, res) => {
     // Filtros dinámicos
     for (const campo in filter) {
       ps.input(campo, sql.VarChar);
-      condiciones.push(`${campo} LIKE '%' + @${campo} + '%'`);
+      condiciones.push(`Nombre LIKE '%' + @${campo} + '%' OR Modelo LIKE '%' + @${campo} + '%' OR NumeroSerie LIKE '%' + @${campo} + '%' OR Ubicacion LIKE '%' + @${campo} + '%'`);
     }
 
     if (condiciones.length > 0) {
@@ -100,37 +100,116 @@ app.get('/activos', async (req, res) => {
   }
 });
 
-
+// GET /activos adaptado a React Admin
+app.get('/activos/:id', async (req, res) => {
+  try {
+    const {id} = req.params
+    await sql.connect(config);
+    const result = await sql.query`SELECT * FROM Activos WHERE id = ${id}`;
+    res.send(result.recordset[0]);
+  } catch (err) {
+    console.error('Error al obtener activos:', err);
+    res.status(500).send('Error en el servidor');
+  }
+});
 
 //Post de Activos
-app.post('/api/activo', async (req, res) => {
+app.post('/api/activos', async (req, res) => {
   const {
     Nombre, Marca, Modelo, NumeroSerie,
     Ubicacion, Departamento, UsuarioAsignado,
-    FechaAdquisicion, Proveedor, Costo, Observaciones
+    FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones
   } = req.body;
 
   try {
     await sql.connect(config)
-    await sql.query`
+    const result = await sql.query`
       INSERT INTO Activos (
         Nombre, Marca, Modelo, NumeroSerie,
         Ubicacion, Departamento, UsuarioAsignado,
-        FechaAdquisicion, Proveedor, Costo, Observaciones
+        FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones
       )
+      OUTPUT INSERTED.id
       VALUES (
         ${Nombre}, ${Marca}, ${Modelo}, ${NumeroSerie},
         ${Ubicacion}, ${Departamento}, ${UsuarioAsignado},
-        ${FechaAdquisicion}, ${Proveedor}, ${Costo}, ${Observaciones}
+        ${FechaAdquisicion}, ${FechaExpiracion} ${Proveedor}, ${Costo}, ${Observaciones}
       )
     `;
 
-    res.status(201).json({ message: '✅ Insertado con éxito' });
+    const insertedId = result.recordset[0].id;
+
+    res.status(201).json({
+      id: insertedId,
+      Nombre,
+      Marca,
+      Modelo,
+      NumeroSerie,
+      Ubicacion,
+      Departamento,
+      UsuarioAsignado,
+      FechaAdquisicion,
+      FechaExpiracion,
+      Proveedor,
+      Costo,
+      Observaciones
+    });
   } catch (error) {
     console.error('Error al insertar equipo:', error);
     res.status(500).json({ message: 'Error al insertar equipo' });
   } finally {
     sql.close(); // Cierra la conexión después de cada request
+  }
+});
+
+//DELETE de Activo
+app.delete('/activos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await sql.connect(config);
+    await sql.query`DELETE FROM Activos WHERE id = ${id}`;
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('Error al eliminar:', err);
+    res.status(500).json({ error: 'Error al eliminar' });
+  }
+});
+
+// Actualizar un activo
+app.put('/activos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      Nombre, Marca, Modelo, NumeroSerie, Estatus,
+      Ubicacion, Departamento, UsuarioAsignado,
+      FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones
+    } = req.body;
+
+    await sql.connect(config);
+    const result = await sql.query`
+      UPDATE Activos SET
+        Nombre = ${Nombre},
+        Marca = ${Marca},
+        Modelo = ${Modelo},
+        NumeroSerie = ${NumeroSerie},
+        Estatus = ${Estatus},
+        Ubicacion = ${Ubicacion},
+        Departamento = ${Departamento},
+        UsuarioAsignado = ${UsuarioAsignado},
+        FechaAdquisicion = ${FechaAdquisicion},
+        FechaExpiracion = ${FechaExpiracion},
+        Proveedor = ${Proveedor},
+        Costo = ${Costo},
+        Observaciones = ${Observaciones}
+      WHERE id = ${id}
+    `;
+
+    const activoActualizado = await sql.query` SELECT * FROM activos WHERE id = ${id}`;
+
+    res.status(200).json(activoActualizado.recordsets[0][0]);
+  } catch (err) {
+    console.error('Error al actualizar:', err);
+    res.status(500).json({ error: 'Error al actualizar' });
   }
 });
 

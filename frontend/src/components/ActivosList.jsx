@@ -6,11 +6,11 @@ import {
   NumberField,
   TextInput,
   SelectInput,
-  Filter,
+//  Filter,
 } from "react-admin";
 import {Modal} from './Modal'
 import FormularioEquipos from './FormularioEquipos';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 
 
@@ -26,9 +26,16 @@ const filtros = [
     ]}
   />,
   <TextInput label="Departamento" source="departamento" />,
-  <TextInput label="Ubicación" source="ubicacion" />,
+  <SelectInput
+    label="Ubicación"
+    source="ubicacion"
+    choices={[
+      { id: 'Sucursal 1', name: 'Sucursal 1' },
+      { id: 'Sucursal 2', name: 'Sucursal 2' },
+      { id: 'Sucursal 3', name: 'Sucursal 3' },
+  ]}
+  />
 ];
-
 
 const ActivosList = (props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,11 +56,12 @@ const ActivosList = (props) => {
           <TextField source="Marca" />
           <TextField source="Modelo" />
           <TextField source="NumeroSerie" />
-          <TextField source="Estado" />
+          <TextField source="Estatus" />
           <TextField source="Ubicacion" />
           <TextField source="Departamento" />
-          <TextField source="UsuarioAsignado" />
+          <TextField source="UsuarioAsignado"/>
           <DateField source="FechaAdquisicion" />
+          <DateField source="FechaExpiracion" />
           <TextField source="Proveedor" />
           <NumberField source="Costo" options={{ style: 'currency', currency: 'USD' }} />
           <TextField source="Observaciones" />

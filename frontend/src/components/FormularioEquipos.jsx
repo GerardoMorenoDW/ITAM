@@ -24,7 +24,7 @@ const FormularioEquipos = ({onClose}) => {
     e.preventDefault();
 
     try {
-      const res = await fetch('http://localhost:5000/api/activo', {
+      const res = await fetch('http://localhost:5000/api/activos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
