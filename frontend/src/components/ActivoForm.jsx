@@ -17,7 +17,7 @@ const ActivoForm = (props) => (
                         { id: 'ACTIVE', name: 'ACTIVE' },
                         { id: 'INACTIVE', name: 'INACTIVE' },
                     ]}/>
-    <SelectInput source="Ubicacion" choices={[
+    <SelectInput source="Sucursal" choices={[
                         { id: 'Sucursal 1', name: 'Sucursal 1' },
                         { id: 'Sucursal 2', name: 'Sucursal 2' },
                         { id: 'Sucursal 3', name: 'Sucursal 3' },

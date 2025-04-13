@@ -16,7 +16,7 @@ export const provider = {
       _start: (page - 1) * perPage,
       _end: page * perPage,
       ...filter,
-    };
+    };    
 
     const url = `${apiUrl}/${resource}?${fetchUtils.queryParameters(query)}`;
 

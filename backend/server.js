@@ -52,53 +52,53 @@ app.get('/activos', async (req, res) => {
   try {
     await sql.connect(config);
 
-    // Parsear parámetros de React Admin
-    const filter = req.query.filter ? JSON.parse(req.query.filter) : {};
-    const range = req.query.range ? JSON.parse(req.query.range) : [0, 9];
-    const sort = req.query.sort ? JSON.parse(req.query.sort) : ['id', 'ASC'];
+    const sortField = req.query._sort || 'id';
+    const sortOrder = req.query._order || 'ASC';
+    const start = parseInt(req.query._start) || 0;
+    const end = parseInt(req.query._end) || 10;
+    const limit = end - start;
 
-    const offset = range[0];
-    const limit = range[1] - range[0] + 1;
+    const filter = { ...req.query };
+    delete filter._sort;
+    delete filter._order;
+    delete filter._start;
+    delete filter._end;
 
     let baseQuery = `SELECT * FROM Activos`;
     const condiciones = [];
     const ps = new sql.PreparedStatement();
 
-    // Filtros dinámicos
+    // Filtros dinámicos (solo aplica a campos clave que quieras buscar)
     for (const campo in filter) {
       ps.input(campo, sql.VarChar);
-      condiciones.push(`Nombre LIKE '%' + @${campo} + '%' OR Modelo LIKE '%' + @${campo} + '%' OR NumeroSerie LIKE '%' + @${campo} + '%' OR Ubicacion LIKE '%' + @${campo} + '%'`);
+      condiciones.push(`Nombre LIKE '%' + @${campo} + '%' OR Modelo LIKE '%' + @${campo} + '%' OR NumeroSerie LIKE '%' + @${campo} + '%' OR Sucursal LIKE '%' + @${campo} + '%'`);
     }
 
     if (condiciones.length > 0) {
       baseQuery += ' WHERE ' + condiciones.join(' AND ');
     }
 
-    // Ordenamiento
-    baseQuery += ` ORDER BY ${sort[0]} ${sort[1]}`;
-
-    // Paginación (usando OFFSET-FETCH para SQL Server)
-    baseQuery += ` OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY`;
+    baseQuery += ` ORDER BY ${sortField} ${sortOrder}`;
+    baseQuery += ` OFFSET ${start} ROWS FETCH NEXT ${limit} ROWS ONLY`;
 
     await ps.prepare(baseQuery);
     const result = await ps.execute(filter);
     await ps.unprepare();
 
-    // Total de registros (para React Admin)
-    const totalQuery = `SELECT COUNT(*) as total FROM Activos`;
-    const totalResult = await sql.query(totalQuery);
-    const total = totalResult.recordset[0].total;
+    // Conteo total sin paginación
+    const countQuery = `SELECT COUNT(*) as total FROM Activos`;
+    const countResult = await sql.query(countQuery);
+    const total = countResult.recordset[0].total;
 
-    // Headers necesarios para paginación en React Admin
-    res.setHeader('Content-Range', `activos ${range[0]}-${range[1]}/${total}`);
+    res.setHeader('Content-Range', `activos ${start}-${end}/${total}`);
     res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
-
-    res.send(result.recordset);
+    res.json(result.recordset);
   } catch (err) {
     console.error('Error al obtener activos:', err);
     res.status(500).send('Error en el servidor');
   }
 });
+
 
 // GET /activos adaptado a React Admin
 app.get('/activos/:id', async (req, res) => {
@@ -117,7 +117,7 @@ app.get('/activos/:id', async (req, res) => {
 app.post('/api/activos', async (req, res) => {
   const {
     Nombre, Marca, Modelo, NumeroSerie,
-    Ubicacion, Departamento, UsuarioAsignado,
+    Sucursal, Departamento, UsuarioAsignado,
     FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones
   } = req.body;
 
@@ -126,14 +126,14 @@ app.post('/api/activos', async (req, res) => {
     const result = await sql.query`
       INSERT INTO Activos (
         Nombre, Marca, Modelo, NumeroSerie,
-        Ubicacion, Departamento, UsuarioAsignado,
+        Sucursal, Departamento, UsuarioAsignado,
         FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones
       )
       OUTPUT INSERTED.id
       VALUES (
         ${Nombre}, ${Marca}, ${Modelo}, ${NumeroSerie},
-        ${Ubicacion}, ${Departamento}, ${UsuarioAsignado},
-        ${FechaAdquisicion}, ${FechaExpiracion} ${Proveedor}, ${Costo}, ${Observaciones}
+        ${Sucursal}, ${Departamento}, ${UsuarioAsignado},
+        ${FechaAdquisicion}, ${FechaExpiracion}, ${Proveedor}, ${Costo}, ${Observaciones}
       )
     `;
 
@@ -145,7 +145,7 @@ app.post('/api/activos', async (req, res) => {
       Marca,
       Modelo,
       NumeroSerie,
-      Ubicacion,
+      Sucursal,
       Departamento,
       UsuarioAsignado,
       FechaAdquisicion,
@@ -181,7 +181,7 @@ app.put('/activos/:id', async (req, res) => {
     const { id } = req.params;
     const {
       Nombre, Marca, Modelo, NumeroSerie, Estatus,
-      Ubicacion, Departamento, UsuarioAsignado,
+      Sucursal, Departamento, UsuarioAsignado,
       FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones
     } = req.body;
 
@@ -193,7 +193,7 @@ app.put('/activos/:id', async (req, res) => {
         Modelo = ${Modelo},
         NumeroSerie = ${NumeroSerie},
         Estatus = ${Estatus},
-        Ubicacion = ${Ubicacion},
+        Sucursal = ${Sucursal},
         Departamento = ${Departamento},
         UsuarioAsignado = ${UsuarioAsignado},
         FechaAdquisicion = ${FechaAdquisicion},

@@ -39,9 +39,16 @@ services:
           path: package.json
 
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2019-latest
+    build: ./sql
     environment:
       SA_PASSWORD: "Geraxuful0415**"
       ACCEPT_EULA: "Y"
     ports:
       - "1433:1433"
+    volumes:
+      - ./sql:/sql
+      - sqlserver-data:/var/opt/mssql
+    command: ["/bin/bash", "/sql/entrypoint.sh"]
+  
+volumes:
+  sqlserver-data:

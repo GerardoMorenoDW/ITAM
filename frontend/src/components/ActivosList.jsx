@@ -6,11 +6,11 @@ import {
   NumberField,
   TextInput,
   SelectInput,
-//  Filter,
+  //Filter,
 } from "react-admin";
 import {Modal} from './Modal'
 import FormularioEquipos from './FormularioEquipos';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 
 
@@ -27,8 +27,8 @@ const filtros = [
   />,
   <TextInput label="Departamento" source="departamento" />,
   <SelectInput
-    label="Ubicación"
-    source="ubicacion"
+    label="Sucursal"
+    source="sucursal"
     choices={[
       { id: 'Sucursal 1', name: 'Sucursal 1' },
       { id: 'Sucursal 2', name: 'Sucursal 2' },
@@ -57,7 +57,7 @@ const ActivosList = (props) => {
           <TextField source="Modelo" />
           <TextField source="NumeroSerie" />
           <TextField source="Estatus" />
-          <TextField source="Ubicacion" />
+          <TextField source="Sucursal" />
           <TextField source="Departamento" />
           <TextField source="UsuarioAsignado"/>
           <DateField source="FechaAdquisicion" />
