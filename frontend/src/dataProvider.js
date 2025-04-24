@@ -65,6 +65,22 @@ export const provider = {
     return {
       data: json || params.data, // si tu backend no responde con data, al menos devolvemos la enviada
     };
-  }
+  },
+
+  deleteMany: async (resource, params) => {
+    const url = `${apiUrl}/${resource}/deleteMany`;
+    const options = {
+      method: 'POST',
+      body: JSON.stringify({ ids: params.ids }),
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+    };
+  
+    const { json } = await httpClient(url, options);
+  
+    return {
+      data: json.deleted || params.ids,
+    };
+  },
+  
   
 };

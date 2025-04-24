@@ -99,6 +99,60 @@ app.get('/activos', async (req, res) => {
   }
 });
 
+// GET DE ACTIVOS FISICOS
+app.get('/activos-fisicos', async (req, res) => {
+  try {
+    await sql.connect(config);
+
+    const range = req.query.range ? JSON.parse(req.query.range) : [0, 9];
+    const sort = req.query.sort ? JSON.parse(req.query.sort) : ['af.Id', 'ASC'];
+    const filter = req.query.filter ? JSON.parse(req.query.filter) : {};
+
+    const offset = range[0];
+    const limit = range[1] - range[0] + 1;
+
+    let query = `
+      SELECT af.*, a.Nombre AS NombreActivo, s.Nombre AS NombreSucursal
+      FROM ActivosFisicos af
+      JOIN Activos a ON af.ActivoId = a.Id
+      JOIN Sucursales s ON af.SucursalId = s.Id
+    `;
+
+    const conditions = [];
+    const ps = new sql.PreparedStatement();
+
+    for (const campo in filter) {
+      ps.input(campo, sql.VarChar);
+      conditions.push(`af.${campo} LIKE '%' + @${campo} + '%'`);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ` ORDER BY ${sort[0]} ${sort[1]}`;
+    query += ` OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY`;
+
+    await ps.prepare(query);
+    const result = await ps.execute(filter);
+    await ps.unprepare();
+
+    const totalResult = await sql.query`SELECT COUNT(*) AS total FROM ActivosFisicos`;
+    const total = totalResult.recordset[0].total;
+
+    res.setHeader('Content-Range', `activos-fisicos ${range[0]}-${range[1]}/${total}`);
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
+
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error al obtener activos físicos:', err);
+    res.status(500).send('Error al obtener activos físicos');
+  } finally {
+    sql.close();
+  }
+});
+
+
 
 // GET /activos adaptado a React Admin
 app.get('/activos/:id', async (req, res) => {
@@ -118,7 +172,7 @@ app.post('/api/activos', async (req, res) => {
   const {
     Nombre, Marca, Modelo, NumeroSerie,
     Sucursal, Departamento, UsuarioAsignado,
-    FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones
+    FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones, StockTotal
   } = req.body;
 
   try {
@@ -127,13 +181,13 @@ app.post('/api/activos', async (req, res) => {
       INSERT INTO Activos (
         Nombre, Marca, Modelo, NumeroSerie,
         Sucursal, Departamento, UsuarioAsignado,
-        FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones
+        FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones, StockTotal
       )
       OUTPUT INSERTED.id
       VALUES (
         ${Nombre}, ${Marca}, ${Modelo}, ${NumeroSerie},
         ${Sucursal}, ${Departamento}, ${UsuarioAsignado},
-        ${FechaAdquisicion}, ${FechaExpiracion}, ${Proveedor}, ${Costo}, ${Observaciones}
+        ${FechaAdquisicion}, ${FechaExpiracion}, ${Proveedor}, ${Costo}, ${Observaciones}, ${StockTotal}
       )
     `;
 
@@ -152,7 +206,8 @@ app.post('/api/activos', async (req, res) => {
       FechaExpiracion,
       Proveedor,
       Costo,
-      Observaciones
+      Observaciones,
+      StockTotal
     });
   } catch (error) {
     console.error('Error al insertar equipo:', error);
@@ -175,13 +230,40 @@ app.delete('/activos/:id', async (req, res) => {
   }
 });
 
+// DELETE múltiple de Activos
+app.post('/activos/deleteMany', async (req, res) => {
+  const { ids } = req.body; // se espera un array de IDs
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'No se proporcionaron IDs válidos' });
+  }
+
+  try {
+    await sql.connect(config);
+
+    // Construimos la lista de IDs como parámetros seguros
+    const idList = ids.map((id, index) => `@id${index}`).join(',');
+    const request = new sql.Request();
+    ids.forEach((id, index) => {
+      request.input(`id${index}`, sql.Int, id);
+    });
+
+    await request.query(`DELETE FROM Activos WHERE id IN (${idList})`);
+
+    res.status(200).json({ success: true, deleted: ids });
+  } catch (err) {
+    console.error('Error al eliminar múltiples activos:', err);
+    res.status(500).json({ error: 'Error al eliminar múltiples activos' });
+  }
+});
+
+
 // Actualizar un activo
 app.put('/activos/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      Nombre, Marca, Modelo, NumeroSerie, Estatus,
-      Sucursal, Departamento, UsuarioAsignado,
+      Nombre, Marca, Modelo, NumeroSerie, Estatus, Departamento, UsuarioAsignado,
       FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones
     } = req.body;
 
@@ -193,7 +275,6 @@ app.put('/activos/:id', async (req, res) => {
         Modelo = ${Modelo},
         NumeroSerie = ${NumeroSerie},
         Estatus = ${Estatus},
-        Sucursal = ${Sucursal},
         Departamento = ${Departamento},
         UsuarioAsignado = ${UsuarioAsignado},
         FechaAdquisicion = ${FechaAdquisicion},

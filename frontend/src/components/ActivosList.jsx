@@ -8,9 +8,9 @@ import {
   SelectInput,
   //Filter,
 } from "react-admin";
-import {Modal} from './Modal'
-import FormularioEquipos from './FormularioEquipos';
-import React, { useState } from 'react';
+//import {Modal} from './Modal'
+//import FormularioEquipos from './FormularioEquipos';
+import React from 'react';
 
 
 
@@ -38,18 +38,18 @@ const filtros = [
 ];
 
 const ActivosList = (props) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  /* const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
-
+ */
   return (
     <List filters={filtros} {...props}>
       <>
-        <button onClick={openModal}>Agregar Activo</button>
+        {/* <button onClick={openModal}>Agregar Activo</button>
         <Modal isOpen={isModalOpen} onClose={closeModal}>
           <FormularioEquipos isOpen={isModalOpen} onClose={closeModal} />
-        </Modal>
+        </Modal> */}
 
         <Datagrid rowClick="edit">
           <TextField source="Nombre" />
