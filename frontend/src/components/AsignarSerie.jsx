@@ -3,22 +3,19 @@ import {
     SimpleForm,
     TextInput,
     SelectInput,
-    ReferenceInput,
+    ReferenceInput
   } from "react-admin";
   
   const AsignarSerie = (props) => (
     <Edit {...props}>
       <SimpleForm>
         <ReferenceInput source="ActivoId" reference="activos" disabled>
-          <SelectInput optionText="Nombre" />
+          <SelectInput optionText="Nombre" disabled />
         </ReferenceInput>
-  
         <TextInput source="NumeroSerie" label="Número de Serie" />
-  
         <ReferenceInput source="SucursalId" reference="sucursales" disabled>
           <SelectInput optionText="Nombre" />
         </ReferenceInput>
-  
         <SelectInput
           source="Estatus"
           choices={[

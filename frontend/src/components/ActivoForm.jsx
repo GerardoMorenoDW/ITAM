@@ -15,12 +15,16 @@ const ActivoForm = (props) => {
       <TextInput source="Nombre" />
       <TextInput source="Marca" />
       <TextInput source="Modelo" />
+      <SelectInput source="Tipo" choices={[
+                          { id: 'Hardware', name: 'Hardware' },
+                          { id: 'Software', name: 'Software' }
+                      ]}/>
       <TextInput source="NumeroSerie" />
-      <SelectInput source="Sucursal" choices={[
+      {/* <SelectInput source="Sucursal" choices={[
                           { id: '1', name: 'Sucursal 1' },
                           { id: '2', name: 'Sucursal 2' },
                           { id: '3', name: 'Sucursal 3' },
-                      ]}/>
+                      ]}/> */}
       <TextInput source="Departamento" />
       <TextInput source="UsuarioAsignado" />
       <DateInput source="FechaAdquisicion" />

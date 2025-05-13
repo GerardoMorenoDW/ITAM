@@ -71,7 +71,7 @@ app.get('/activos', async (req, res) => {
     // Filtros dinámicos (solo aplica a campos clave que quieras buscar)
     for (const campo in filter) {
       ps.input(campo, sql.VarChar);
-      condiciones.push(`Nombre LIKE '%' + @${campo} + '%' OR Modelo LIKE '%' + @${campo} + '%' OR NumeroSerie LIKE '%' + @${campo} + '%' OR Sucursal LIKE '%' + @${campo} + '%'`);
+      condiciones.push(`Nombre LIKE '%' + @${campo} + '%' OR Modelo LIKE '%' + @${campo} + '%' OR NumeroSerie LIKE '%' + @${campo} + '%' OR Sucursal LIKE '%' + @${campo} + '%' OR Tipo LIKE '%' + @${campo} + '%'`);
     }
 
     if (condiciones.length > 0) {
@@ -152,6 +152,49 @@ app.get('/activos-fisicos', async (req, res) => {
   }
 });
 
+// backend: Obtener varios activos por ID para getMany
+app.post('/activos/many', async (req, res) => {
+  try {
+    const ids = req.body.ids;
+
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ message: 'Se esperaba un array de ids' });
+    }
+
+    await sql.connect(config);
+    const request = new sql.Request();
+    const idList = ids.join(',');
+
+    const result = await request.query(`
+      SELECT * FROM ActivosFisicos WHERE ActivoId IN (${idList})
+    `);
+
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error en /activos/many:', err);
+    res.status(500).json({ message: 'Error en el servidor' });
+  }
+});
+
+// GET de activos fisicos por ID
+
+app.get('/activos-fisicos/:id', async (req, res) => {
+  try{
+    const idActivo = req.params.id;
+    await sql.connect(config);
+    const request = new sql.Request()
+    const result = await request.query(`
+      SELECT * FROM ActivosFisicos WHERE id = ${idActivo}
+      `);
+    res.json(result.recordset);
+
+  }catch (err){
+    console.error('Error al obtener activo:', err);
+    res.status(500).send('Error en el servidor');
+  }
+})
+
+
 
 
 // GET /activos adaptado a React Admin
@@ -170,7 +213,7 @@ app.get('/activos/:id', async (req, res) => {
 //Post de Activos
 app.post('/api/activos', async (req, res) => {
   const {
-    Nombre, Marca, Modelo, NumeroSerie,
+    Nombre, Marca, Modelo, Tipo, NumeroSerie,
     Sucursal, Departamento, UsuarioAsignado,
     FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones, StockTotal
   } = req.body;
@@ -179,16 +222,15 @@ app.post('/api/activos', async (req, res) => {
     await sql.connect(config)
     const result = await sql.query`
       INSERT INTO Activos (
-        Nombre, Marca, Modelo, NumeroSerie,
-        Sucursal, Departamento, UsuarioAsignado,
+        Nombre, Marca, Modelo, Tipo, NumeroSerie, Departamento, UsuarioAsignado,
         FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones, StockTotal
       )
-      OUTPUT INSERTED.id
       VALUES (
-        ${Nombre}, ${Marca}, ${Modelo}, ${NumeroSerie},
-        ${Sucursal}, ${Departamento}, ${UsuarioAsignado},
+        ${Nombre}, ${Marca}, ${Modelo}, ${Tipo}, ${NumeroSerie}, ${Departamento}, ${UsuarioAsignado},
         ${FechaAdquisicion}, ${FechaExpiracion}, ${Proveedor}, ${Costo}, ${Observaciones}, ${StockTotal}
       )
+
+      SELECT SCOPE_IDENTITY() AS id;
     `;
 
     const insertedId = result.recordset[0].id;
@@ -198,8 +240,8 @@ app.post('/api/activos', async (req, res) => {
       Nombre,
       Marca,
       Modelo,
+      Tipo,
       NumeroSerie,
-      Sucursal,
       Departamento,
       UsuarioAsignado,
       FechaAdquisicion,
@@ -293,6 +335,48 @@ app.put('/activos/:id', async (req, res) => {
     res.status(500).json({ error: 'Error al actualizar' });
   }
 });
+
+
+// GET DE SUCURSALES
+app.get('/sucursales', async (req, res) => {
+  try {
+    await sql.connect(config);
+    const result = await sql.query`SELECT Id AS id, Nombre FROM Sucursales`;
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error al obtener sucursales:', err);
+    res.status(500).send('Error al obtener sucursales');
+  } finally {
+    sql.close();
+  }
+});
+
+//Para hacer dataprovider getMany Sucursales
+app.post('/sucursales/many', async (req, res) => {
+  try {
+    const ids = req.body.ids;
+
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ message: 'Se esperaba un array de ids' });
+    }
+
+    await sql.connect(config);
+    const request = new sql.Request();
+    const idList = ids.join(',');
+
+    const result = await request.query(`
+      SELECT * FROM Sucursales WHERE id IN (${idList})
+    `);
+
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error en /sucursales/many:', err);
+    res.status(500).json({ message: 'Error en el servidor' });
+  }
+});
+
+
+
 
 
 // Arrancar el servidor

@@ -57,14 +57,15 @@ const ActivosList = (props) => {
           <TextField source="Modelo" />
           <TextField source="NumeroSerie" />
           <TextField source="Estatus" />
-          <TextField source="Sucursal" />
+          {/* <TextField source="Sucursal" /> */}
           <TextField source="Departamento" />
           <TextField source="UsuarioAsignado"/>
           <DateField source="FechaAdquisicion" />
-          <DateField source="FechaExpiracion" />
+          {/* <DateField source="FechaExpiracion" /> */}
           <TextField source="Proveedor" />
           <NumberField source="Costo" options={{ style: 'currency', currency: 'USD' }} />
           <TextField source="Observaciones" />
+          <DateField source="StockTotal" />
         </Datagrid>
       </>
     </List>

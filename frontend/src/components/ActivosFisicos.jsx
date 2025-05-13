@@ -10,14 +10,12 @@ import {
     <List>
       <Datagrid>
         <TextField source="id" />
-        <ReferenceField source="ActivoId" reference="activos" label="Activo">
-          <TextField source="Nombre" />
-        </ReferenceField>
+        <TextField source="NombreActivo" />
         <TextField source="NumeroSerie" />
         <ReferenceField source="SucursalId" reference="sucursales">
           <TextField source="Nombre" />
         </ReferenceField>
-        <TextField source="Estatus" />
+        <TextField source="Estado" />
         <EditButton />
       </Datagrid>
     </List>

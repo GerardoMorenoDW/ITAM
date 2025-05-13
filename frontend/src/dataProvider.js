@@ -82,5 +82,19 @@ export const provider = {
     };
   },
   
+  //Listado de activos-fisicos
+  getMany: async (resource, params) => {
+    const url = `${apiUrl}/${resource}/many`;
+  
+    const { json } = await httpClient(url, {
+      method: 'POST',
+      body: JSON.stringify({ ids: params.ids }),
+    });
+  
+    return {
+      data: json,
+    };
+  },
+  
   
 };
