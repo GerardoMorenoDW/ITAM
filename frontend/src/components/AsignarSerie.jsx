@@ -13,7 +13,7 @@ import {
           <SelectInput optionText="Nombre" disabled />
         </ReferenceInput>
         <TextInput source="NumeroSerie" label="Número de Serie" />
-        <ReferenceInput source="SucursalId" reference="sucursales" disabled>
+        <ReferenceInput source="SucursalId" reference="sucursales">
           <SelectInput optionText="Nombre" />
         </ReferenceInput>
         <SelectInput

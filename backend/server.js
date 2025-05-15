@@ -99,59 +99,6 @@ app.get('/activos', async (req, res) => {
   }
 });
 
-// GET DE ACTIVOS FISICOS
-app.get('/activos-fisicos', async (req, res) => {
-  try {
-    await sql.connect(config);
-
-    const range = req.query.range ? JSON.parse(req.query.range) : [0, 9];
-    const sort = req.query.sort ? JSON.parse(req.query.sort) : ['af.Id', 'ASC'];
-    const filter = req.query.filter ? JSON.parse(req.query.filter) : {};
-
-    const offset = range[0];
-    const limit = range[1] - range[0] + 1;
-
-    let query = `
-      SELECT af.*, a.Nombre AS NombreActivo, s.Nombre AS NombreSucursal
-      FROM ActivosFisicos af
-      JOIN Activos a ON af.ActivoId = a.Id
-      JOIN Sucursales s ON af.SucursalId = s.Id
-    `;
-
-    const conditions = [];
-    const ps = new sql.PreparedStatement();
-
-    for (const campo in filter) {
-      ps.input(campo, sql.VarChar);
-      conditions.push(`af.${campo} LIKE '%' + @${campo} + '%'`);
-    }
-
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
-
-    query += ` ORDER BY ${sort[0]} ${sort[1]}`;
-    query += ` OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY`;
-
-    await ps.prepare(query);
-    const result = await ps.execute(filter);
-    await ps.unprepare();
-
-    const totalResult = await sql.query`SELECT COUNT(*) AS total FROM ActivosFisicos`;
-    const total = totalResult.recordset[0].total;
-
-    res.setHeader('Content-Range', `activos-fisicos ${range[0]}-${range[1]}/${total}`);
-    res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
-
-    res.json(result.recordset);
-  } catch (err) {
-    console.error('Error al obtener activos físicos:', err);
-    res.status(500).send('Error al obtener activos físicos');
-  } finally {
-    sql.close();
-  }
-});
-
 // backend: Obtener varios activos por ID para getMany
 app.post('/activos/many', async (req, res) => {
   try {
@@ -175,27 +122,6 @@ app.post('/activos/many', async (req, res) => {
     res.status(500).json({ message: 'Error en el servidor' });
   }
 });
-
-// GET de activos fisicos por ID
-
-app.get('/activos-fisicos/:id', async (req, res) => {
-  try{
-    const idActivo = req.params.id;
-    await sql.connect(config);
-    const request = new sql.Request()
-    const result = await request.query(`
-      SELECT * FROM ActivosFisicos WHERE id = ${idActivo}
-      `);
-    res.json(result.recordset);
-
-  }catch (err){
-    console.error('Error al obtener activo:', err);
-    res.status(500).send('Error en el servidor');
-  }
-})
-
-
-
 
 // GET /activos adaptado a React Admin
 app.get('/activos/:id', async (req, res) => {
@@ -336,6 +262,107 @@ app.put('/activos/:id', async (req, res) => {
   }
 });
 
+
+/* ---------------------- ACTIVOS FISICOS -------------------------------- */
+
+// GET DE ACTIVOS FISICOS
+app.get('/activos-fisicos', async (req, res) => {
+  try {
+    await sql.connect(config);
+
+    const range = req.query.range ? JSON.parse(req.query.range) : [0, 9];
+    const sort = req.query.sort ? JSON.parse(req.query.sort) : ['af.Id', 'ASC'];
+    const filter = req.query.filter ? JSON.parse(req.query.filter) : {};
+
+    const offset = range[0];
+    const limit = range[1] - range[0] + 1;
+
+    let query = `
+      SELECT af.*, a.Nombre AS NombreActivo, s.Nombre AS NombreSucursal
+      FROM ActivosFisicos af
+      JOIN Activos a ON af.ActivoId = a.Id
+      JOIN Sucursales s ON af.SucursalId = s.Id
+    `;
+
+    const conditions = [];
+    const ps = new sql.PreparedStatement();
+
+    for (const campo in filter) {
+      ps.input(campo, sql.VarChar);
+      conditions.push(`af.${campo} LIKE '%' + @${campo} + '%'`);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ` ORDER BY ${sort[0]} ${sort[1]}`;
+    query += ` OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY`;
+
+    await ps.prepare(query);
+    const result = await ps.execute(filter);
+    await ps.unprepare();
+
+    const totalResult = await sql.query`SELECT COUNT(*) AS total FROM ActivosFisicos`;
+    const total = totalResult.recordset[0].total;
+
+    res.setHeader('Content-Range', `activos-fisicos ${range[0]}-${range[1]}/${total}`);
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
+
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error al obtener activos físicos:', err);
+    res.status(500).send('Error al obtener activos físicos');
+  } finally {
+    sql.close();
+  }
+});
+
+// GET de activos fisicos por ID
+
+app.get('/activos-fisicos/:id', async (req, res) => {
+  try{
+    const idActivo = req.params.id;
+    await sql.connect(config);
+    const request = new sql.Request()
+    const result = await request.query(`
+      SELECT * FROM ActivosFisicos WHERE id = ${idActivo}
+      `);
+    res.json(result.recordset);
+
+  }catch (err){
+    console.error('Error al obtener activo:', err);
+    res.status(500).send('Error en el servidor');
+  }
+})
+
+// Put de Activos Fisicos
+app.put('/activos-fisicos/:id', async (req, res) => {
+  const { id } = req.params;
+  const { NumeroSerie, Estado, SucursalId } = req.body;
+
+  try {
+    const pool = await sql.connect(config);
+    await pool.request()
+      .input('id', sql.Int, id)
+      .input('NumeroSerie', sql.NVarChar, NumeroSerie)
+      .input('Estado', sql.NVarChar, Estado)
+      .input('SucursalId', sql.Int, SucursalId)
+      .query(`
+        UPDATE ActivosFisicos
+        SET NumeroSerie = @NumeroSerie,
+            Estado = @Estado,
+            SucursalId = @SucursalId
+        WHERE id = @id
+      `);
+    res.json({ id, NumeroSerie, Estado, SucursalId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error updating activo físico' });
+  }
+});
+
+/* ------------------------------------------------------------------------------------- */
 
 // GET DE SUCURSALES
 app.get('/sucursales', async (req, res) => {

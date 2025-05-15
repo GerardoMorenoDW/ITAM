@@ -44,6 +44,15 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID('Sucursales', 'U') IS NULL
+BEGIN
+    CREATE TABLE Sucursales (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        Nombre NVARCHAR(100)
+    );
+END
+GO
+
 -- Stock por sucursal
 IF OBJECT_ID('StockSucursal', 'U') IS NULL
 CREATE TABLE StockSucursal (
@@ -51,8 +60,8 @@ CREATE TABLE StockSucursal (
     ActivoId INT NOT NULL,
     SucursalId INT NOT NULL,
     Cantidad INT DEFAULT 0,
-    FOREIGN KEY (ActivoId) REFERENCES Activos(id),
-    FOREIGN KEY (SucursalId) REFERENCES Sucursales(id)
+    FOREIGN KEY (ActivoId) REFERENCES Activos(id ) ON DELETE CASCADE,
+    FOREIGN KEY (SucursalId) REFERENCES Sucursales(id) ON DELETE CASCADE
 );
 GO
 
@@ -65,9 +74,9 @@ CREATE TABLE Movimientos (
     DestinoSucursalId INT NOT NULL,
     Cantidad INT,
     FechaMovimiento DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (ActivoId) REFERENCES Activos(id),
-    FOREIGN KEY (OrigenSucursalId) REFERENCES Sucursales(id),
-    FOREIGN KEY (DestinoSucursalId) REFERENCES Sucursales(id)
+    FOREIGN KEY (ActivoId) REFERENCES Activos(id) ON DELETE CASCADE,
+    FOREIGN KEY (OrigenSucursalId) REFERENCES Sucursales(id)  ON DELETE CASCADE,
+    FOREIGN KEY (DestinoSucursalId) REFERENCES Sucursales(id)  ON DELETE CASCADE
 );
 GO
 
@@ -80,18 +89,9 @@ CREATE TABLE ActivosFisicos (
     Estado NVARCHAR(50) DEFAULT 'DISPONIBLE',
     SucursalId INT NOT NULL,
     FechaRegistro DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (ActivoId) REFERENCES Activos(id),
-    FOREIGN KEY (SucursalId) REFERENCES Sucursales(id)
+    FOREIGN KEY (ActivoId) REFERENCES Activos(id) ON DELETE CASCADE,
+    FOREIGN KEY (SucursalId) REFERENCES Sucursales(id) ON DELETE CASCADE
 );
-GO
-
-IF OBJECT_ID('Sucursales', 'U') IS NULL
-BEGIN
-    CREATE TABLE Sucursales (
-        id INT IDENTITY(1,1) PRIMARY KEY,
-        Nombre NVARCHAR(100)
-    );
-END
 GO
 
 -- Insertar sucursales si no existen

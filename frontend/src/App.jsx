@@ -1,7 +1,7 @@
 import './App.css';
 //import React, { useState } from 'react';
 import { Admin, Resource } from "react-admin";
-import simpleRestProvider from "ra-data-simple-rest";
+//import simpleRestProvider from "ra-data-simple-rest";
 //import FormularioEquipos from './components/FormularioEquipos';
 import ActivosCreate from './components/ActivoCreate';
 import UpdateActivo from './components/UpdateActivo'
@@ -25,8 +25,7 @@ function App() {
 
       <Admin dashboard={Dashboard} dataProvider={provider}>
         <Resource name="activos" list={ActivosList} create={ActivosCreate} edit={UpdateActivo} />
-        <Resource name="activos-fisicos" list={ActivosFisicosList} edit={AsignarSerie}
-/>
+        <Resource name="activos-fisicos" list={ActivosFisicosList} edit={AsignarSerie}/>
       </Admin>
     </div>
   );
