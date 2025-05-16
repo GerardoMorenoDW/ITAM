@@ -6,6 +6,7 @@ import {
   NumberField,
   TextInput,
   SelectInput,
+  EditButton,
   //Filter,
 } from "react-admin";
 //import {Modal} from './Modal'
@@ -51,7 +52,7 @@ const ActivosList = (props) => {
           <FormularioEquipos isOpen={isModalOpen} onClose={closeModal} />
         </Modal> */}
 
-        <Datagrid rowClick="edit">
+        <Datagrid rowClick="show">
           <TextField source="Nombre" />
           <TextField source="Marca" />
           <TextField source="Modelo" />
@@ -65,7 +66,8 @@ const ActivosList = (props) => {
           <TextField source="Proveedor" />
           <NumberField source="Costo" options={{ style: 'currency', currency: 'USD' }} />
           <TextField source="Observaciones" />
-          <DateField source="StockTotal" />
+          <NumberField source="StockTotal" />
+          <EditButton />
         </Datagrid>
       </>
     </List>

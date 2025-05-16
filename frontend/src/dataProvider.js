@@ -63,7 +63,7 @@ export const provider = {
     });
   
     return {
-      data: json || params.data, // si tu backend no responde con data, al menos devolvemos la enviada
+      data: json || params.data, // devolvemos lo enviado
     };
   },
 

@@ -10,6 +10,7 @@ import ActivosList from './components/ActivosList'
 import AsignarSerie from './components/AsignarSerie';
 import ActivosFisicosList from './components/ActivosFisicos'
 import { provider } from './dataProvider';
+import ActivosDetail from './components/DetalleActivo'
 //import {Modal} from './components/Modal'
 
 
@@ -24,7 +25,7 @@ function App() {
       </header>
 
       <Admin dashboard={Dashboard} dataProvider={provider}>
-        <Resource name="activos" list={ActivosList} create={ActivosCreate} edit={UpdateActivo} />
+        <Resource name="activos" list={ActivosList} create={ActivosCreate} edit={UpdateActivo} show={ActivosDetail}  />
         <Resource name="activos-fisicos" list={ActivosFisicosList} edit={AsignarSerie}/>
       </Admin>
     </div>

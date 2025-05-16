@@ -136,6 +136,20 @@ app.get('/activos/:id', async (req, res) => {
   }
 });
 
+// GET Disponibilidad del activo adaptado a React Admin
+app.get('/disponibilidad/:id', async (req, res) => {
+  try {
+    const {id} = req.params
+    await sql.connect(config);
+    const result = await sql.query`SELECT t2.Nombre, t1.Cantidad FROM StockSucursal t1 LEFT JOIN Sucursales t2
+                                   ON t1.SucursalId = t2.id WHERE t1.ActivoId = ${id}`;
+    res.send(result.recordset);
+  } catch (err) {
+    console.error('Error al obtener activos:', err);
+    res.status(500).send('Error en el servidor');
+  }
+});
+
 //Post de Activos
 app.post('/api/activos', async (req, res) => {
   const {
@@ -328,7 +342,7 @@ app.get('/activos-fisicos/:id', async (req, res) => {
     const result = await request.query(`
       SELECT * FROM ActivosFisicos WHERE id = ${idActivo}
       `);
-    res.json(result.recordset);
+    res.json(result.recordset[0]);
 
   }catch (err){
     console.error('Error al obtener activo:', err);
@@ -340,6 +354,7 @@ app.get('/activos-fisicos/:id', async (req, res) => {
 app.put('/activos-fisicos/:id', async (req, res) => {
   const { id } = req.params;
   const { NumeroSerie, Estado, SucursalId } = req.body;
+  console.timeLog(id)
 
   try {
     const pool = await sql.connect(config);
@@ -377,6 +392,23 @@ app.get('/sucursales', async (req, res) => {
     sql.close();
   }
 });
+
+//Get una sucursal
+
+app.get('/sucursales/:id', async (req, res) => {
+  try {
+    const {id} = req.params;
+    await sql.connect(config);
+    const result = await sql.query`SELECT Id AS id, Nombre FROM Sucursales`;
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error al obtener sucursales:', err);
+    res.status(500).send('Error al obtener sucursales');
+  } finally {
+    sql.close();
+  }
+});
+
 
 //Para hacer dataprovider getMany Sucursales
 app.post('/sucursales/many', async (req, res) => {

@@ -17,11 +17,11 @@ import {
           <SelectInput optionText="Nombre" />
         </ReferenceInput>
         <SelectInput
-          source="Estatus"
+          source="Estado"
           choices={[
             { id: "DISPONIBLE", name: "DISPONIBLE" },
-            { id: "EN_USO", name: "EN USO" },
-            { id: "EN_MANTENIMIENTO", name: "EN MANTENIMIENTO" },
+            { id: "EN USO", name: "EN USO" },
+            { id: "EN MANTENIMIENTO", name: "EN MANTENIMIENTO" },
           ]}
         />
       </SimpleForm>
