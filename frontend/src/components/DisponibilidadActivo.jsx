@@ -22,7 +22,7 @@ const DisponibilidadTable = () => {
     fetchDisponibilidad();
   }, [record]);
 
-  if (!disponibilidad || disponibilidad.length === 0) {
+  if (!disponibilidad["data"] || disponibilidad["data"].length === 0) {
     return <div>No hay disponibilidad registrada.</div>;
   }
 
@@ -35,12 +35,16 @@ const DisponibilidadTable = () => {
         </tr>
       </thead>
       <tbody>
-        {disponibilidad.map((item, index) => (
+        {disponibilidad["data"].map((item, index) => (
         <tr key={index}>
             <td style={{ border: "1px solid #ccc", padding: "8px" }}>{item.Nombre}</td>
             <td style={{ border: "1px solid #ccc", padding: "8px" }}>{item.Cantidad}</td>
         </tr>
         ))}
+        <tr>
+            <td style={{ border: "1px solid #ccc", padding: "8px" }}>Stock Total</td>
+            <td style={{ border: "1px solid #ccc", padding: "8px" }}>{disponibilidad.StockTotal}</td>
+        </tr>
       </tbody>
     </table>
   );

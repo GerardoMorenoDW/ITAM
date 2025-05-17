@@ -140,10 +140,17 @@ app.get('/activos/:id', async (req, res) => {
 app.get('/disponibilidad/:id', async (req, res) => {
   try {
     const {id} = req.params
+    const resultado = {
+      "data": [],
+      "StockTotal": 0
+    }
     await sql.connect(config);
-    const result = await sql.query`SELECT t2.Nombre, t1.Cantidad FROM StockSucursal t1 LEFT JOIN Sucursales t2
+    const result = await sql.query`SELECT t1.SucursalId, t2.Nombre, t1.Cantidad FROM StockSucursal t1 LEFT JOIN Sucursales t2
                                    ON t1.SucursalId = t2.id WHERE t1.ActivoId = ${id}`;
-    res.send(result.recordset);
+    const StockTotal = await sql.query`SELECT SUM(Cantidad) as StockTotal FROM StockSucursal WHERE ActivoId = ${id}`;
+    resultado.data = result.recordset
+    resultado.StockTotal = StockTotal.recordset[0].StockTotal
+    res.send(resultado);
   } catch (err) {
     console.error('Error al obtener activos:', err);
     res.status(500).send('Error en el servidor');

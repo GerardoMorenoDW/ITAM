@@ -69,14 +69,12 @@ GO
 IF OBJECT_ID('Movimientos', 'U') IS NULL
 CREATE TABLE Movimientos (
     id INT IDENTITY(1,1) PRIMARY KEY,
-    ActivoId INT NOT NULL,
-    OrigenSucursalId INT NOT NULL,
-    DestinoSucursalId INT NOT NULL,
+    ActivoId INT FOREIGN KEY REFERENCES Activos(id),
+    SucursalOrigenId INT FOREIGN KEY REFERENCES Sucursales(id),
+    SucursalDestinoId INT FOREIGN KEY REFERENCES Sucursales(id),
     Cantidad INT,
-    FechaMovimiento DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (ActivoId) REFERENCES Activos(id) ON DELETE CASCADE,
-    FOREIGN KEY (OrigenSucursalId) REFERENCES Sucursales(id)  ON DELETE CASCADE,
-    FOREIGN KEY (DestinoSucursalId) REFERENCES Sucursales(id)  ON DELETE CASCADE
+    Fecha DATETIME DEFAULT GETDATE(),
+    Observaciones NVARCHAR(MAX)
 );
 GO
 
