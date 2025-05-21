@@ -31,9 +31,9 @@ const filtros = [
     label="Sucursal"
     source="sucursal"
     choices={[
-      { id: 'Sucursal 1', name: 'Sucursal 1' },
-      { id: 'Sucursal 2', name: 'Sucursal 2' },
-      { id: 'Sucursal 3', name: 'Sucursal 3' },
+      { id: '1', name: 'Sucursal 1' },
+      { id: '2', name: 'Sucursal 2' },
+      { id: '3', name: 'Sucursal 3' },
   ]}
   />
 ];

@@ -60,12 +60,12 @@ const ShowActions = () => {
             return notify(`Cantidad supera el stock disponible (${stockDisponible})`, { type: 'warning' });
         }
 
-        if (!Cantidad || parseInt(Cantidad) == 0) {
+        if (!Cantidad || parseInt(Cantidad) === 0) {
             return notify("Cantidad no ingresada o igual a 0", { type: 'warning' });
         }
 
         // Aquí harías el POST a tu API para guardar el movimiento
-        fetch('http://localhost:5000/movimientos', {
+        fetch('http://localhost:5000/api/movimientos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

@@ -18,7 +18,7 @@ const config = {
   database: process.env.DB_NAME || 'Itam',
   port: parseInt(process.env.DB_PORT) || '1433' ,
   options: {
-    encrypt: false, // cambiar a true si estás usando Azure u otra instancia con SSL
+    encrypt: false,
     trustServerCertificate: true // para desarrollo local
   }
 };
@@ -94,7 +94,7 @@ app.get('/activos', async (req, res) => {
     res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
     res.json(result.recordset);
   } catch (err) {
-    console.error('Error al obtener activos:', err);
+    console.error('Error al obtener lista de activos:', err);
     res.status(500).send('Error en el servidor');
   }
 });
@@ -131,7 +131,7 @@ app.get('/activos/:id', async (req, res) => {
     const result = await sql.query`SELECT * FROM Activos WHERE id = ${id}`;
     res.send(result.recordset[0]);
   } catch (err) {
-    console.error('Error al obtener activos:', err);
+    console.error('Error al obtener activo:', err);
     res.status(500).send('Error en el servidor');
   }
 });
@@ -152,8 +152,10 @@ app.get('/disponibilidad/:id', async (req, res) => {
     resultado.StockTotal = StockTotal.recordset[0].StockTotal
     res.send(resultado);
   } catch (err) {
-    console.error('Error al obtener activos:', err);
+    console.error('Error al obtener disponibilidad de activo:', err);
     res.status(500).send('Error en el servidor');
+  } finally {
+    sql.close();
   }
 });
 
@@ -166,7 +168,7 @@ app.post('/api/activos', async (req, res) => {
   } = req.body;
 
   try {
-    await sql.connect(config)
+    await sql.connect(config);
     const result = await sql.query`
       INSERT INTO Activos (
         Nombre, Marca, Modelo, Tipo, NumeroSerie, Departamento, UsuarioAsignado,
@@ -201,8 +203,6 @@ app.post('/api/activos', async (req, res) => {
   } catch (error) {
     console.error('Error al insertar equipo:', error);
     res.status(500).json({ message: 'Error al insertar equipo' });
-  } finally {
-    sql.close(); // Cierra la conexión después de cada request
   }
 });
 
@@ -216,7 +216,7 @@ app.delete('/activos/:id', async (req, res) => {
   } catch (err) {
     console.error('Error al eliminar:', err);
     res.status(500).json({ error: 'Error al eliminar' });
-  }
+   }
 });
 
 // DELETE múltiple de Activos
@@ -280,9 +280,52 @@ app.put('/activos/:id', async (req, res) => {
   } catch (err) {
     console.error('Error al actualizar:', err);
     res.status(500).json({ error: 'Error al actualizar' });
-  }
+   }
 });
 
+/* ---------------------------- MOVIMIENTOS DE ACTIVOS ---------------------------- */
+
+app.post('/api/movimientos', async (req, res) => {
+  try{ 
+    const {ActivoId, SucursalOrigenId, SucursalDestinoId, Cantidad} = req.body;
+
+    if (!ActivoId || !SucursalOrigenId || !SucursalDestinoId || !Cantidad) {
+      return res.status(400).json({ error: 'Todos los campos son requeridos' });
+    }
+
+    if (SucursalOrigenId === SucursalDestinoId) {
+      return res.status(400).json({ error: 'La sucursal origen y destino no pueden ser iguales' });
+    }
+
+    if (Cantidad <= 0) {
+      return res.status(400).json({ error: 'La cantidad debe ser mayor que 0' });
+    }
+
+    await sql.connect(config);
+    // Verificar stock disponible en la sucursal origen
+    const checkStock = await sql.query`
+      SELECT Cantidad FROM StockSucursal 
+      WHERE ActivoId = ${ActivoId} AND SucursalId = ${SucursalOrigenId}
+    `;
+
+    const stockDisponible = checkStock.recordset[0]?.Cantidad || 0;
+
+    if (stockDisponible < Cantidad) {
+      return res.status(400).json({ error: `Stock insuficiente en la sucursal origen. Disponible: ${stockDisponible}` });
+    }
+
+    await sql.query(`
+      INSERT INTO Movimientos (ActivoId, SucursalOrigenId, SucursalDestinoId, Cantidad)
+      VALUES ( ${ActivoId}, ${SucursalOrigenId}, ${SucursalDestinoId}, ${Cantidad})
+      `)
+    res.status(201).json()
+
+
+  }catch(error){
+    console.error('Error al obtener activos físicos:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+})
 
 /* ---------------------- ACTIVOS FISICOS -------------------------------- */
 
@@ -291,12 +334,24 @@ app.get('/activos-fisicos', async (req, res) => {
   try {
     await sql.connect(config);
 
-    const range = req.query.range ? JSON.parse(req.query.range) : [0, 9];
+    /* const range = req.query.range ? JSON.parse(req.query.range) : [0, 9];
     const sort = req.query.sort ? JSON.parse(req.query.sort) : ['af.Id', 'ASC'];
     const filter = req.query.filter ? JSON.parse(req.query.filter) : {};
 
     const offset = range[0];
-    const limit = range[1] - range[0] + 1;
+    const limit = range[1] - range[0] + 1; */
+
+    const sortField = req.query._sort || 'id';
+    const sortOrder = req.query._order || 'ASC';
+    const start = parseInt(req.query._start) || 0;
+    const end = parseInt(req.query._end) || 10;
+    const limit = end - start;
+
+    const filter = { ...req.query };
+    delete filter._sort;
+    delete filter._order;
+    delete filter._start;
+    delete filter._end;
 
     let query = `
       SELECT af.*, a.Nombre AS NombreActivo, s.Nombre AS NombreSucursal
@@ -310,15 +365,16 @@ app.get('/activos-fisicos', async (req, res) => {
 
     for (const campo in filter) {
       ps.input(campo, sql.VarChar);
-      conditions.push(`af.${campo} LIKE '%' + @${campo} + '%'`);
+      conditions.push(`a.Nombre LIKE '%' + @${campo} + '%' OR af.NumeroSerie LIKE '%' + @${campo} + '%' OR af.SucursalId LIKE '%' + @${campo} + '%' OR af.Estado LIKE '%' + @${campo} + '%'`);
+      
     }
 
     if (conditions.length > 0) {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 
-    query += ` ORDER BY ${sort[0]} ${sort[1]}`;
-    query += ` OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY`;
+    query += ` ORDER BY ${sortField} ${sortOrder}`;
+    query += ` OFFSET ${start} ROWS FETCH NEXT ${limit} ROWS ONLY`;
 
     await ps.prepare(query);
     const result = await ps.execute(filter);
@@ -327,15 +383,13 @@ app.get('/activos-fisicos', async (req, res) => {
     const totalResult = await sql.query`SELECT COUNT(*) AS total FROM ActivosFisicos`;
     const total = totalResult.recordset[0].total;
 
-    res.setHeader('Content-Range', `activos-fisicos ${range[0]}-${range[1]}/${total}`);
+    res.setHeader('Content-Range', `activos-fisicos ${start}-${end}/${total}`);
     res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
 
     res.json(result.recordset);
   } catch (err) {
     console.error('Error al obtener activos físicos:', err);
-    res.status(500).send('Error al obtener activos físicos');
-  } finally {
-    sql.close();
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -364,8 +418,8 @@ app.put('/activos-fisicos/:id', async (req, res) => {
   console.timeLog(id)
 
   try {
-    const pool = await sql.connect(config);
-    await pool.request()
+    await sql.connect(config);
+    const result = await new sql.Request()
       .input('id', sql.Int, id)
       .input('NumeroSerie', sql.NVarChar, NumeroSerie)
       .input('Estado', sql.NVarChar, Estado)
@@ -395,24 +449,19 @@ app.get('/sucursales', async (req, res) => {
   } catch (err) {
     console.error('Error al obtener sucursales:', err);
     res.status(500).send('Error al obtener sucursales');
-  } finally {
-    sql.close();
   }
 });
 
 //Get una sucursal
-
 app.get('/sucursales/:id', async (req, res) => {
   try {
     const {id} = req.params;
     await sql.connect(config);
-    const result = await sql.query`SELECT Id AS id, Nombre FROM Sucursales`;
+    const result = await sql.query`SELECT Id AS id, Nombre FROM Sucursales WHERE id = ${id}`;
     res.json(result.recordset);
   } catch (err) {
     console.error('Error al obtener sucursales:', err);
     res.status(500).send('Error al obtener sucursales');
-  } finally {
-    sql.close();
   }
 });
 
@@ -425,6 +474,7 @@ app.post('/sucursales/many', async (req, res) => {
     if (!Array.isArray(ids)) {
       return res.status(400).json({ message: 'Se esperaba un array de ids' });
     }
+
 
     await sql.connect(config);
     const request = new sql.Request();

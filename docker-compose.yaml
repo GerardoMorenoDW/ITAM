@@ -1,19 +1,4 @@
 services:
-  backend:
-    build: ./backend
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    depends_on:
-      - sqlserver
-    environment:
-      - DB_HOST=sqlserver
-      - DB_USER=sa
-      - DB_PASSWORD=Geraxuful0415**
-      - DB_NAME=Itam
-      - DB_PORT=1433
 
   frontend:
     build:
@@ -49,6 +34,26 @@ services:
       - ./sql:/sql
       - sqlserver-data:/var/opt/mssql
     command: ["/bin/bash", "/sql/entrypoint.sh"]
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Geraxuful0415**", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - sqlserver
+    environment:
+      - DB_HOST=sqlserver
+      - DB_USER=sa
+      - DB_PASSWORD=Geraxuful0415**
+      - DB_NAME=Itam
+      - DB_PORT=1433
   
 volumes:
   sqlserver-data:

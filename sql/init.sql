@@ -156,7 +156,53 @@ BEGIN
 END;
 GO
 
+IF OBJECT_ID('Tr_MovimientosDeActivos', 'TR') IS NOT NULL
+    DROP TRIGGER Tr_MovimientosDeActivos;
+GO
 
+CREATE TRIGGER Tr_MovimientosDeActivos
+ON Movimientos
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
 
+    -- Actualizar StockSucursal: Sumar en destino y restar en origen
+    MERGE StockSucursal AS target
+    USING (
+        SELECT ActivoId, SucursalDestinoId AS SucursalId, Cantidad
+        FROM INSERTED
+    ) AS source
+    ON target.ActivoId = source.ActivoId AND target.SucursalId = source.SucursalId
+    WHEN MATCHED THEN
+        UPDATE SET target.Cantidad = target.Cantidad + source.Cantidad
+    WHEN NOT MATCHED THEN
+        INSERT (ActivoId, SucursalId, Cantidad)
+        VALUES (source.ActivoId, source.SucursalId, source.Cantidad);
 
+    UPDATE ss
+    SET ss.Cantidad = ss.Cantidad - i.Cantidad
+    FROM StockSucursal ss
+    INNER JOIN INSERTED i ON ss.ActivoId = i.ActivoId AND ss.SucursalId = i.SucursalOrigenId;
 
+    -- Actualizar ActivosFisicos: Mover unidades físicas a la nueva sucursal
+    DECLARE @ActivoId INT, @SucursalOrigenId INT, @SucursalDestinoId INT, @Cantidad INT;
+
+    SELECT TOP 1 
+        @ActivoId = ActivoId, 
+        @SucursalOrigenId = SucursalOrigenId,
+        @SucursalDestinoId = SucursalDestinoId,
+        @Cantidad = Cantidad
+    FROM INSERTED;
+
+    ;WITH ActivosParaMover AS (
+        SELECT TOP (@Cantidad) *
+        FROM ActivosFisicos
+        WHERE ActivoId = @ActivoId AND SucursalId = @SucursalOrigenId
+        ORDER BY Id
+    )
+    UPDATE ActivosParaMover
+    SET SucursalId = @SucursalDestinoId;
+
+END;
+GO
