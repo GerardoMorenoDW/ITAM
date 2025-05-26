@@ -19,23 +19,14 @@ const filtros = [
   <TextInput label="Buscar" source="q" alwaysOn />,
   <SelectInput
     label="Estado"
-    source="estado"
+    source="Estado"
     choices={[
-      { id: "Operativo", name: "Operativo" },
-      { id: "En reparación", name: "En reparación" },
-      { id: "Dado de baja", name: "Dado de baja" },
+      { id: "DISPONIBLE", name: "DISPONIBLE" },
+      { id: "EN USO", name: "EN USO" },
+      { id: "EN MANTENIMIENTO", name: "EN MANTENIMIENTO" },
     ]}
   />,
   <TextInput label="Departamento" source="departamento" />,
-  <SelectInput
-    label="Sucursal"
-    source="sucursal"
-    choices={[
-      { id: '1', name: 'Sucursal 1' },
-      { id: '2', name: 'Sucursal 2' },
-      { id: '3', name: 'Sucursal 3' },
-  ]}
-  />
 ];
 
 const ActivosList = (props) => {

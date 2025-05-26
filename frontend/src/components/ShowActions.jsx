@@ -1,6 +1,6 @@
 import {
     useRecordContext,
-    useRedirect,
+    //useRedirect,
     useNotify,
 } from "react-admin";
 import {
@@ -16,7 +16,7 @@ import { useState, useEffect } from "react";
 
 const ShowActions = () => {
     const record = useRecordContext();
-    const redirect = useRedirect();
+    //const redirect = useRedirect();
     const notify = useNotify();
 
     const [openTransfer, setOpenTransfer] = useState(false);

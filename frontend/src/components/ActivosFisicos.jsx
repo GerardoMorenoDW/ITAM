@@ -6,6 +6,7 @@ import {
     EditButton,
     SelectInput,
     TextInput,
+    ReferenceInput,
   } from "react-admin";
 
   const filtros = [
@@ -20,15 +21,9 @@ import {
           ]}
     />,
     <TextInput label="Numero de Serie" source="NumeroSerie" />,
-    <SelectInput
-      label="Sucursal"
-      source="sucursal"
-      choices={[
-        { id: '1', name: 'Sucursal 1' },
-        { id: '2', name: 'Sucursal 2' },
-        { id: '3', name: 'Sucursal 3' },
-    ]}
-    />
+    <ReferenceInput label="Sucursal" source="SucursalId" reference="sucursales" alwaysOn>
+      <SelectInput optionText="Nombre" />
+    </ReferenceInput>
   ];
   
   const ActivosFisicosList = () => (

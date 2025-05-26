@@ -1,7 +1,7 @@
 import {
   Edit,
   useNotify,
-  useRedirect,
+  //useRedirect,
   useRecordContext,
   ReferenceInput,
   SelectInput,
@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 
 const AsignarSerie = (props) => {
   const notify = useNotify();
-  const redirect = useRedirect();
+  //const redirect = useRedirect();
   const record = useRecordContext();
   const [originalSucursalId, setOriginalSucursalId] = useState(null);
 

@@ -16,7 +16,7 @@ const config = {
   password: process.env.DB_PASSWORD || 'Geraxuful0415**',
   server: process.env.DB_HOST || 'sqlserver',
   database: process.env.DB_NAME || 'Itam',
-  port: parseInt(process.env.DB_PORT) || '1433' ,
+  port: parseInt(process.env.DB_PORT) || '1433',
   options: {
     encrypt: false,
     trustServerCertificate: true // para desarrollo local
@@ -126,7 +126,7 @@ app.post('/activos/many', async (req, res) => {
 // GET /activos adaptado a React Admin
 app.get('/activos/:id', async (req, res) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
     await sql.connect(config);
     const result = await sql.query`SELECT * FROM Activos WHERE id = ${id}`;
     res.send(result.recordset[0]);
@@ -139,7 +139,7 @@ app.get('/activos/:id', async (req, res) => {
 // GET Disponibilidad del activo adaptado a React Admin
 app.get('/disponibilidad/:id', async (req, res) => {
   try {
-    const {id} = req.params
+    const { id } = req.params
     const resultado = {
       "data": [],
       "StockTotal": 0
@@ -216,7 +216,7 @@ app.delete('/activos/:id', async (req, res) => {
   } catch (err) {
     console.error('Error al eliminar:', err);
     res.status(500).json({ error: 'Error al eliminar' });
-   }
+  }
 });
 
 // DELETE múltiple de Activos
@@ -280,14 +280,14 @@ app.put('/activos/:id', async (req, res) => {
   } catch (err) {
     console.error('Error al actualizar:', err);
     res.status(500).json({ error: 'Error al actualizar' });
-   }
+  }
 });
 
 /* ---------------------------- MOVIMIENTOS DE ACTIVOS ---------------------------- */
 
 app.post('/api/movimientos', async (req, res) => {
-  try{ 
-    const {ActivoId, SucursalOrigenId, SucursalDestinoId, Cantidad} = req.body;
+  try {
+    const { ActivoId, SucursalOrigenId, SucursalDestinoId, Cantidad } = req.body;
 
     if (!ActivoId || !SucursalOrigenId || !SucursalDestinoId || !Cantidad) {
       return res.status(400).json({ error: 'Todos los campos son requeridos' });
@@ -321,71 +321,94 @@ app.post('/api/movimientos', async (req, res) => {
     res.status(201).json()
 
 
-  }catch(error){
+  } catch (error) {
     console.error('Error al obtener activos físicos:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 })
 
 /* ---------------------- ACTIVOS FISICOS -------------------------------- */
-
 // GET DE ACTIVOS FISICOS
 app.get('/activos-fisicos', async (req, res) => {
   try {
     await sql.connect(config);
 
-    /* const range = req.query.range ? JSON.parse(req.query.range) : [0, 9];
-    const sort = req.query.sort ? JSON.parse(req.query.sort) : ['af.Id', 'ASC'];
-    const filter = req.query.filter ? JSON.parse(req.query.filter) : {};
-
-    const offset = range[0];
-    const limit = range[1] - range[0] + 1; */
-
-    const sortField = req.query._sort || 'id';
+    const sortField = req.query._sort || 'af.Id';
     const sortOrder = req.query._order || 'ASC';
-    const start = parseInt(req.query._start) || 0;
-    const end = parseInt(req.query._end) || 10;
-    const limit = end - start;
+    const start = req.query._start ? parseInt(req.query._start) : 0;
+    const end = req.query._end ? parseInt(req.query._end) : null;
+    const limit = end !== null ? end - start : 1000;
 
-    const filter = { ...req.query };
-    delete filter._sort;
-    delete filter._order;
-    delete filter._start;
-    delete filter._end;
+    const filters = req.query.filter ? JSON.parse(req.query.filter) : {};
 
-    let query = `
+    let whereClauses = [];
+    let inputParams = {};
+    let i = 0;
+
+    for (const campo in filters) {
+      const paramName = `param${i}`;
+
+      if (campo === "q") {
+        whereClauses.push(`(a.Nombre LIKE @${paramName} OR af.NumeroSerie LIKE @${paramName})`);
+        inputParams[paramName] = `%${filters[campo]}%`;
+      } else if (campo === "Estado") {
+        whereClauses.push(`af.Estado = @${paramName}`);
+        inputParams[paramName] = filters[campo];
+      } else if (campo === "departamento") {
+        whereClauses.push(`af.Departamento = @${paramName}`);
+        inputParams[paramName] = filters[campo];
+      } else if (campo === "SucursalId") {
+        whereClauses.push(`af.SucursalId = @${paramName}`);
+        inputParams[paramName] = filters[campo];
+      } else {
+        whereClauses.push(`af.${campo} = @${paramName}`);
+        inputParams[paramName] = filters[campo];
+      }
+      i++;
+    }
+
+    let baseQuery = `
       SELECT af.*, a.Nombre AS NombreActivo, s.Nombre AS NombreSucursal
       FROM ActivosFisicos af
       JOIN Activos a ON af.ActivoId = a.Id
       JOIN Sucursales s ON af.SucursalId = s.Id
     `;
 
-    const conditions = [];
-    const ps = new sql.PreparedStatement();
-
-    for (const campo in filter) {
-      ps.input(campo, sql.VarChar);
-      conditions.push(`a.Nombre LIKE '%' + @${campo} + '%' OR af.NumeroSerie LIKE '%' + @${campo} + '%' OR af.SucursalId LIKE '%' + @${campo} + '%' OR af.Estado LIKE '%' + @${campo} + '%'`);
-      
+    if (whereClauses.length > 0) {
+      baseQuery += ` WHERE ${whereClauses.join(' AND ')}`;
     }
 
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
+    const queryWithPagination = `
+      ${baseQuery}
+      ORDER BY ${sortField} ${sortOrder}
+      OFFSET ${start} ROWS FETCH NEXT ${limit} ROWS ONLY
+    `;
+
+    const request = new sql.Request();
+    for (const key in inputParams) {
+      request.input(key, sql.VarChar, inputParams[key]);
     }
 
-    query += ` ORDER BY ${sortField} ${sortOrder}`;
-    query += ` OFFSET ${start} ROWS FETCH NEXT ${limit} ROWS ONLY`;
+    const result = await request.query(queryWithPagination);
 
-    await ps.prepare(query);
-    const result = await ps.execute(filter);
-    await ps.unprepare();
+    // Total con filtros
+    const countRequest = new sql.Request();
+    for (const key in inputParams) {
+      countRequest.input(key, sql.VarChar, inputParams[key]);
+    }
 
-    const totalResult = await sql.query`SELECT COUNT(*) AS total FROM ActivosFisicos`;
-    const total = totalResult.recordset[0].total;
+    const countResult = await countRequest.query(`
+      SELECT COUNT(*) AS total
+      FROM ActivosFisicos af
+      JOIN Activos a ON af.ActivoId = a.Id
+      JOIN Sucursales s ON af.SucursalId = s.Id
+      ${whereClauses.length > 0 ? 'WHERE ' + whereClauses.join(' AND ') : ''}
+    `);
 
-    res.setHeader('Content-Range', `activos-fisicos ${start}-${end}/${total}`);
+    const total = countResult.recordset[0].total;
+
+    res.setHeader('Content-Range', `activos-fisicos ${start}-${start + result.recordset.length}/${total}`);
     res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
-
     res.json(result.recordset);
   } catch (err) {
     console.error('Error al obtener activos físicos:', err);
@@ -393,10 +416,12 @@ app.get('/activos-fisicos', async (req, res) => {
   }
 });
 
+
+
 // GET de activos fisicos por ID
 
 app.get('/activos-fisicos/:id', async (req, res) => {
-  try{
+  try {
     const idActivo = req.params.id;
     await sql.connect(config);
     const request = new sql.Request()
@@ -405,7 +430,7 @@ app.get('/activos-fisicos/:id', async (req, res) => {
       `);
     res.json(result.recordset[0]);
 
-  }catch (err){
+  } catch (err) {
     console.error('Error al obtener activo:', err);
     res.status(500).send('Error en el servidor');
   }
@@ -438,6 +463,57 @@ app.put('/activos-fisicos/:id', async (req, res) => {
   }
 });
 
+// Cantidad de Activos por estado
+app.get('/activos-fisicos-estados', async (req, res) => {
+  try {
+    await sql.connect(config);
+    const result = await new sql.Request().query(`
+      SELECT Estado, COUNT(*) AS cantidad
+      FROM ActivosFisicos
+      GROUP BY Estado
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error("Error al obtener activos por estado:", err);
+    res.status(500).json({ error: 'Error al obtener activos por estado' });
+  }
+});
+
+//Grafica de compras por mes
+
+app.get('/compras-por-mes', async (req, res) => {
+    try {
+        const anio = parseInt(req.query.anio);
+
+        if (isNaN(anio)) {
+            return res.status(400).json({ error: "Año inválido" });
+        }
+
+        await sql.connect(config);
+        const request = new sql.Request();
+        request.input('anio', sql.Int, anio);
+
+        const result = await request.query(`
+            SELECT 
+                MONTH(t1.FechaRegistro) AS Mes,
+                YEAR(t1.FechaRegistro) AS Año,
+                SUM(t2.Costo) AS Compras
+            FROM ActivosFisicos t1
+            JOIN Activos t2 ON t1.ActivoId = t2.Id
+            WHERE YEAR(t1.FechaRegistro) = @anio
+            GROUP BY YEAR(t1.FechaRegistro), MONTH(t1.FechaRegistro)
+            ORDER BY Mes
+        `);
+
+        res.json(result.recordset);
+    } catch (err) {
+        console.error("Error obteniendo compras por mes:", err);
+        res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
+
+
+
 /* ------------------------------------------------------------------------------------- */
 
 // GET DE SUCURSALES
@@ -455,7 +531,7 @@ app.get('/sucursales', async (req, res) => {
 //Get una sucursal
 app.get('/sucursales/:id', async (req, res) => {
   try {
-    const {id} = req.params;
+    const { id } = req.params;
     await sql.connect(config);
     const result = await sql.query`SELECT Id AS id, Nombre FROM Sucursales WHERE id = ${id}`;
     res.json(result.recordset);

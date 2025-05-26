@@ -5,11 +5,11 @@ import {
     NumberInput,
     SimpleForm,
     SelectInput,
-    useRecordContext,
+    //useRecordContext,
   } from "react-admin";
 
 const ActivoForm = (props) => {
-  const record = useRecordContext(); // o props.record si no usás context
+  //const record = useRecordContext(); // o props.record si no usás context
   return (
     <SimpleForm {...props}>
       <TextInput source="Nombre" />

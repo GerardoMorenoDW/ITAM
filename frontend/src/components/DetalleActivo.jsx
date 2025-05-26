@@ -1,4 +1,4 @@
-import { Show, SimpleShowLayout, TextField, ReferenceField } from "react-admin";
+import { Show, SimpleShowLayout, TextField } from "react-admin";
 import DisponibilidadTable from "./DisponibilidadActivo";
 import ShowActions from "./ShowActions";
 
