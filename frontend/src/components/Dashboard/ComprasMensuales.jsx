@@ -37,15 +37,15 @@ const ComprasPorMesChart = ({ anio = new Date().getFullYear() }) => {
     }, [anio]);
 
     return (
-        <div style={{ width: '100%', height: 400 }}>
+        <div style={{ textAlign: 'center', padding: '0.4rem' }}>
             <h3 style={{ textAlign: 'center' }}>Compras por Mes ({anio})</h3>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={300} >
                 <BarChart data={data}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="mes" />
                     <YAxis />
                     <Tooltip formatter={(value) => `$${value}`} />
-                    <Legend />
+                    <Legend style={"font-size: 8px"} />
                     <Bar dataKey="compras" fill="#8884d8" name="Compras" />
                 </BarChart>
             </ResponsiveContainer>

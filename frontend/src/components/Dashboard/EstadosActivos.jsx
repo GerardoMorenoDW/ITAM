@@ -33,7 +33,10 @@ const DashboardPastel = () => {
             try {
                 const response = await fetch("http://localhost:5000/activos-fisicos-estados");
                 const json = await response.json();
-                setData(json);
+                setData(json.map(item => ({
+                    ...item,
+                    label: `${item.Estado} (${item.cantidad})`
+                })));
             } catch (error) {
                 console.error("Error obteniendo activos por estado:", error);
             }
@@ -61,7 +64,7 @@ const DashboardPastel = () => {
                         outerRadius={100}
                         fill="#8884d8"
                         dataKey="cantidad"
-                        nameKey="Estado"
+                        nameKey="label"
                     >
                         {data.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
