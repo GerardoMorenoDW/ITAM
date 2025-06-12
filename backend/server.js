@@ -1,6 +1,7 @@
 const express = require('express');
 const sql = require('mssql');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const app = express();
@@ -46,6 +47,59 @@ app.get('/usuarios', async (req, res) => {
     res.status(500).send('Error de conexión a SQL Server');
   }
 });
+
+
+// INSERTAR USUARIOS
+
+/* async function insertarUsuarios() {
+  try{
+    await sql.connect(config);
+
+    const usuarios = [
+      { nombre: 'Alberto', correo: 'alberto@example.com', password: 'contrasena123' },
+      { nombre: 'Gerardo', correo: 'gerardo@example.com', password: 'contrasena123' },
+      { nombre: 'Lucía', correo: 'lucia@example.com', password: 'pass789' },
+      { nombre: 'Mario', correo: 'mario@example.com', password: 'micontraseña321' },
+    ];
+
+    for (const usuario of usuarios) {
+      const hash = await bcrypt.hash(usuario.password, 10);
+
+      await sql.query`
+        IF NOT EXISTS (SELECT 1 FROM Usuarios WHERE correo = ${usuario.correo})
+        INSERT INTO Usuarios (nombre, correo, password) VALUES (${usuario.nombre}, ${usuario.correo}, ${hash})
+      `;
+    }
+
+    console.log('Usuarios insertados con hash');
+    sql.close();
+  }catch(error){
+    console.log("Error insertando usuarios")
+  }
+}
+insertarUsuarios().catch(console.error); */
+
+//POST Log in de aplicacion
+app.post('/login', async (req, res) => {
+    const { correo, password } = req.body;
+    const pool = await sql.connect(config);
+
+    const result = await pool.request()
+    .input('correo', sql.VarChar, correo)
+    .query('SELECT * FROM Usuarios WHERE correo = @correo');
+
+    const usuario = result.recordset[0];
+
+    if (!usuario) return res.status(401).json({ message: 'Usuario no encontrado' });
+
+    const coincide = await bcrypt.compare(password, usuario.password);
+
+    if (!coincide) return res.status(401).json({ message: 'Contraseña incorrecta' });
+
+    // Aquí podrías usar JWT. Por ahora, retornamos un objeto simple:
+    res.json({ token: 'mock-token', usuario: { id: usuario.id, nombre: usuario.nombre } });
+});
+
 
 // GET /activos adaptado a React Admin
 app.get('/activos', async (req, res) => {
@@ -352,24 +406,33 @@ app.get('/movimientos/:id', async (req, res)=> {
 })
 
 // Compras de activo
-/* app.put('api/compras/:id', async (req, res)=> {
+app.put('/api/compras/:id', async (req, res)=> {
   try{
     const { id } = req.params
     const {SucursalId, Cantidad } = req.body;
     if (id && SucursalId && Cantidad > 0){
       await sql.connect(config);
       const {recordset} = await sql.query`
-        INSERT INTO Compras ()
-        VALUES ()
-        WHERE ActivoId = ${id}
+        INSERT INTO Compras ( ActivoId, SucursalId, Cantidad )
+        VALUES (${id}, ${SucursalId}, ${Cantidad} );
       `;
+      await sql.query`
+      UPDATE StockSucursal
+      SET Cantidad = Cantidad + ${Cantidad}
+      WHERE ActivoId = ${id} AND SucursalId = ${SucursalId}
+      `
+      await sql.query`
+      UPDATE Activos
+      SET Cantidad = Cantidad + ${Cantidad}
+      WHERE ActivoId = ${id} AND SucursalId = ${SucursalId}
+      `
       res.status(200).json(recordset)
     }
   }catch(error){
     console.error('Error al obtener activos físicos:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
-}) */
+})
 
 /* ---------------------- ACTIVOS FISICOS -------------------------------- */
 // GET DE ACTIVOS FISICOS

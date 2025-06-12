@@ -4,7 +4,6 @@ import {
     //useNotify,
 } from "react-admin";
 import { useState, useEffect } from "react";
-import ShowActions from "./ShowActions";
 
 
 const ShowMovimientos = () => {
@@ -45,10 +44,8 @@ const ShowMovimientos = () => {
     }, [record?.id]);
 
 
-
     return (
         <div style={{ width: "100%", borderCollapse: "collapse", marginTop: "1rem" }}>
-            <div style={{ width: "100%", borderCollapse: "collapse", marginTop: "1rem" }}><ShowActions/></div>
             <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "1rem" }}>
                 <thead>
                     <tr>

@@ -16,7 +16,7 @@ BEGIN
         id INT IDENTITY(1,1) PRIMARY KEY,
         nombre VARCHAR(100) NOT NULL,
         correo VARCHAR(100) UNIQUE NOT NULL,
-        contraseña VARCHAR(255) NOT NULL
+        password VARCHAR(255) NOT NULL
     );
 END
 GO
@@ -92,6 +92,44 @@ CREATE TABLE ActivosFisicos (
     FOREIGN KEY (SucursalId) REFERENCES Sucursales(id) ON DELETE CASCADE
 );
 GO
+
+-- Instancias compras de activos
+IF OBJECT_ID('Compras', 'U') IS NULL
+CREATE TABLE Compras (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    ActivoId INT NOT NULL,
+    SucursalId INT NOT NULL,
+    Cantidad INT NOT NULL,
+    Fecha DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (ActivoId) REFERENCES Activos(id) ON DELETE CASCADE,
+    FOREIGN KEY (SucursalId) REFERENCES Sucursales(id) ON DELETE CASCADE
+);
+GO
+
+-- Instancias Empleados
+IF OBJECT_ID('Empleados', 'U') IS NULL
+CREATE TABLE Empleados (
+    EmpleadoId INT PRIMARY KEY IDENTITY(1,1),
+    Nombre NVARCHAR(100) NOT NULL,
+    Apellido NVARCHAR(100) NOT NULL,
+    Correo NVARCHAR(150) UNIQUE,
+    FechaNacimiento DATE,
+    FechaIngreso DATE NOT NULL,
+    Cargo NVARCHAR(100),
+    SucursalId INT
+);
+
+
+-- Insertar empleados si no existen
+IF NOT EXISTS (SELECT 1 FROM Empleados)
+    INSERT INTO Empleados (Nombre, Apellido, Correo, FechaNacimiento, FechaIngreso, Cargo, SucursalId)
+    VALUES 
+    ('Ana', 'Gómez', 'ana.gomez@empresa.com', '1990-05-15', '2020-03-01', 'Analista', 1),
+    ('Luis', 'Martínez', 'luis.martinez@empresa.com', '1985-08-22', '2018-06-10', 'Gerente', 2),
+    ('Sofía', 'Pérez', 'sofia.perez@empresa.com', '1993-12-02', '2022-01-15', 'Soporte Técnico', 1),
+    ('Carlos', 'Ramírez', 'carlos.ramirez@empresa.com', '1980-03-30', '2010-09-20', 'Jefe de Área', 3);
+GO
+
 
 -- Insertar sucursales si no existen
 IF NOT EXISTS (SELECT 1 FROM Sucursales WHERE Nombre = 'Bodega Principal')
@@ -207,3 +245,4 @@ BEGIN
 
 END;
 GO
+

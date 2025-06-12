@@ -81,24 +81,23 @@ const ShowActions = () => {
         });
     };
 
-    /* const handlePurchase = () => {
+    const handlePurchase = () => {
         const { SucursalId, Cantidad } = form;
 
         // Aquí harías el POST a tu API para guardar el movimiento
-        fetch('http://localhost:5000/api/Compras', {
-            method: 'POST',
+        fetch(`http://localhost:5000/api/compras/${record.id}`, {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 ActivoId: record.id,
-                SucursalOrigenId,
-                SucursalDestinoId,
+                SucursalId,
                 Cantidad: parseInt(Cantidad)
             })
         }).then(() => {
-            notify("Transferencia realizada correctamente", { type: 'success' });
-            setOpenTransfer(false);
+            notify("Compra realizada correctamente", { type: 'success' });
+            setopenPurchase(false);
         });
-    }; */
+    };
 
     return (
         <>
@@ -153,14 +152,14 @@ const ShowActions = () => {
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={handlePurchase} onClose={() => setOpenTransfer(false)}>
-                <DialogTitle>Transferencia</DialogTitle>
+            <Dialog open={openPurchase} onClose={() => setopenPurchase(false)}>
+                <DialogTitle>Compra</DialogTitle>
                 <DialogContent>
                     <TextField
                         select
                         label="Sucursal de compra"
-                        value={form.SucursalDestinoId}
-                        onChange={(e) => setForm({ ...form, SucursalDestinoId: e.target.value })}
+                        value={form.SucursalId}
+                        onChange={(e) => setForm({ ...form, SucursalId: e.target.value })}
                         fullWidth
                         margin="normal"
                     >
@@ -170,7 +169,7 @@ const ShowActions = () => {
                     </TextField>
 
                     <TextField
-                        label={`Cantidad Comprada (Stock disponible: ${stockDisponible})`}
+                        label={`Cantidad Comprada (Stock Actual: ${stockDisponible})`}
                         type="number"
                         value={form.Cantidad}
                         onChange={(e) => setForm({ ...form, Cantidad: e.target.value })}
