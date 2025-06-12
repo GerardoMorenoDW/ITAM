@@ -30,6 +30,7 @@ BEGIN
         Marca NVARCHAR(100),
         Modelo NVARCHAR(100),
         Tipo NVARCHAR(100),
+        SubCategoria NVARCHAR(100),
         NumeroSerie NVARCHAR(100),
         Estatus NVARCHAR(50) DEFAULT 'En Stock',
         Departamento NVARCHAR(100),

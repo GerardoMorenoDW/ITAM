@@ -327,6 +327,50 @@ app.post('/api/movimientos', async (req, res) => {
   }
 })
 
+// get Momivimientos
+app.get('/movimientos/:id', async (req, res)=> {
+  try{
+    const { id } = req.params
+    await sql.connect(config);
+    const {recordset} = await sql.query`
+      SELECT m.ActivoId as ActivoId, 
+      a.Nombre as NombreActivo,
+      (SELECT Nombre FROM Sucursales WHERE id = m.SucursalOrigenId) as SucursalOrigen,
+      (SELECT Nombre FROM Sucursales WHERE id = m.SucursalDestinoId) as SucursalDestino,
+      m.Cantidad,
+      m.Fecha
+      FROM Movimientos m
+      JOIN Activos a on m.ActivoId = a.id
+      WHERE ActivoId = ${id}
+    `;
+    res.status(200).json(recordset)
+
+  }catch(error){
+    console.error('Error al obtener activos físicos:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+})
+
+// Compras de activo
+/* app.put('api/compras/:id', async (req, res)=> {
+  try{
+    const { id } = req.params
+    const {SucursalId, Cantidad } = req.body;
+    if (id && SucursalId && Cantidad > 0){
+      await sql.connect(config);
+      const {recordset} = await sql.query`
+        INSERT INTO Compras ()
+        VALUES ()
+        WHERE ActivoId = ${id}
+      `;
+      res.status(200).json(recordset)
+    }
+  }catch(error){
+    console.error('Error al obtener activos físicos:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+}) */
+
 /* ---------------------- ACTIVOS FISICOS -------------------------------- */
 // GET DE ACTIVOS FISICOS
 app.get('/activos-fisicos', async (req, res) => {

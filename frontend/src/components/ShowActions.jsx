@@ -20,6 +20,7 @@ const ShowActions = () => {
     const notify = useNotify();
 
     const [openTransfer, setOpenTransfer] = useState(false);
+    const [openPurchase, setopenPurchase] = useState(false);
     const [sucursales, setSucursales] = useState([]);
     const [stockDisponible, setStockDisponible] = useState(0);
     const [form, setForm] = useState({
@@ -80,10 +81,32 @@ const ShowActions = () => {
         });
     };
 
+    /* const handlePurchase = () => {
+        const { SucursalId, Cantidad } = form;
+
+        // Aquí harías el POST a tu API para guardar el movimiento
+        fetch('http://localhost:5000/api/Compras', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ActivoId: record.id,
+                SucursalOrigenId,
+                SucursalDestinoId,
+                Cantidad: parseInt(Cantidad)
+            })
+        }).then(() => {
+            notify("Transferencia realizada correctamente", { type: 'success' });
+            setOpenTransfer(false);
+        });
+    }; */
+
     return (
         <>
             <MuiButton onClick={() => setOpenTransfer(true)} variant="outlined">
                 Transferir
+            </MuiButton>
+            <MuiButton onClick={() => setopenPurchase(true)} variant="outlined">
+                Compras
             </MuiButton>
 
             <Dialog open={openTransfer} onClose={() => setOpenTransfer(false)}>
@@ -127,6 +150,37 @@ const ShowActions = () => {
                 <DialogActions>
                     <MuiButton onClick={() => setOpenTransfer(false)}>Cancelar</MuiButton>
                     <MuiButton onClick={handleSubmit} variant="contained" color="primary">Confirmar</MuiButton>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={handlePurchase} onClose={() => setOpenTransfer(false)}>
+                <DialogTitle>Transferencia</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        select
+                        label="Sucursal de compra"
+                        value={form.SucursalDestinoId}
+                        onChange={(e) => setForm({ ...form, SucursalDestinoId: e.target.value })}
+                        fullWidth
+                        margin="normal"
+                    >
+                        {sucursales.map(s => (
+                            <MenuItem key={s.id} value={s.id}>{s.Nombre}</MenuItem>
+                        ))}
+                    </TextField>
+
+                    <TextField
+                        label={`Cantidad Comprada (Stock disponible: ${stockDisponible})`}
+                        type="number"
+                        value={form.Cantidad}
+                        onChange={(e) => setForm({ ...form, Cantidad: e.target.value })}
+                        fullWidth
+                        margin="normal"
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <MuiButton onClick={() => setopenPurchase(false)}>Cancelar</MuiButton>
+                    <MuiButton onClick={handlePurchase} variant="contained" color="primary">Confirmar</MuiButton>
                 </DialogActions>
             </Dialog>
         </>
