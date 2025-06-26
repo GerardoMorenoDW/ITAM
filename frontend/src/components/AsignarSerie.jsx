@@ -61,6 +61,9 @@ const AsignarSerie = (props) => {
         <ReferenceInput source="SucursalId" reference="sucursales">
           <SelectInput optionText="Nombre" />
         </ReferenceInput>
+        <ReferenceInput source="Asignado" reference="empleados">
+          <SelectInput optionText="Nombre" />
+        </ReferenceInput>
         <SelectInput
           source="Estado"
           choices={[

@@ -2,8 +2,8 @@ import { Card, CardContent, Typography, Box, Grid2 } from "@mui/material";
 import DashboardPastel from "./Dashboard/EstadosActivos";
 import ComprasPorMesChart from "./Dashboard/ComprasMensuales";
 import { Resource } from "react-admin";
-import ActivosList from './ActivosList';
-import ActivosDetail from './DetalleActivo';
+import AsignarSerie from "./AsignarSerie";
+import ActivosListExp from "./Dashboard/ProximosExpirar";
 
 const Dashboard = () => (
   <Box sx={{ padding: 4 }}>
@@ -32,7 +32,7 @@ const Dashboard = () => (
       <Grid2 item xs={12} md={6} size={8}>
         <Card>
           <CardContent>
-            <Resource name="activos" list={ActivosList} show={ActivosDetail} />
+            <Resource name="activos-fisicos-expiracion" list={ActivosListExp} show={AsignarSerie} />
           </CardContent>
         </Card>
       </Grid2>

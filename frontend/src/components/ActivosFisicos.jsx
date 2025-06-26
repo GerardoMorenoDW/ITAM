@@ -6,7 +6,7 @@ import {
     EditButton,
     SelectInput,
     TextInput,
-    ReferenceInput,
+    ReferenceInput
   } from "react-admin";
 
   const filtros = [
@@ -20,14 +20,16 @@ import {
             { id: "EN MANTENIMIENTO", name: "EN MANTENIMIENTO" },
           ]}
     />,
-    <TextInput label="Numero de Serie" source="NumeroSerie" />,
     <ReferenceInput label="Sucursal" source="SucursalId" reference="sucursales" alwaysOn>
+      <SelectInput optionText="Nombre" />
+    </ReferenceInput>,
+    <ReferenceInput label="Empleado" source="Asignado" reference="empleados" alwaysOn>
       <SelectInput optionText="Nombre" />
     </ReferenceInput>
   ];
   
   const ActivosFisicosList = () => (
-    <List filters={filtros}>
+    <List filters={filtros} perPage={10}>
       <Datagrid>
         <TextField source="id" />
         <TextField source="NombreActivo" />
@@ -36,6 +38,9 @@ import {
           <TextField source="Nombre" />
         </ReferenceField>
         <TextField source="Estado" />
+        <ReferenceField label= "Asignado a" source="Asignado" reference="empleados">
+          <TextField source="Nombre" />
+        </ReferenceField>
         <EditButton />
       </Datagrid>
     </List>

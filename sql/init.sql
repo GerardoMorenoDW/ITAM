@@ -16,7 +16,8 @@ BEGIN
         id INT IDENTITY(1,1) PRIMARY KEY,
         nombre VARCHAR(100) NOT NULL,
         correo VARCHAR(100) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL
+        password VARCHAR(255) NOT NULL,
+        roll VARCHAR(50) NOT NULL DEFAULT 'user'
     );
 END
 GO
@@ -87,7 +88,10 @@ CREATE TABLE ActivosFisicos (
     NumeroSerie NVARCHAR(100) UNIQUE,
     Estado NVARCHAR(50) DEFAULT 'DISPONIBLE',
     SucursalId INT NOT NULL,
+    Asignado INT DEFAULT 1,
     FechaRegistro DATETIME DEFAULT GETDATE(),
+    FechaExpiracion DATE,
+    FechaMantenimiento DATE,
     FOREIGN KEY (ActivoId) REFERENCES Activos(id) ON DELETE CASCADE,
     FOREIGN KEY (SucursalId) REFERENCES Sucursales(id) ON DELETE CASCADE
 );
@@ -124,7 +128,8 @@ CREATE TABLE Empleados (
 IF NOT EXISTS (SELECT 1 FROM Empleados)
     INSERT INTO Empleados (Nombre, Apellido, Correo, FechaNacimiento, FechaIngreso, Cargo, SucursalId)
     VALUES 
-    ('Ana', 'Gómez', 'ana.gomez@empresa.com', '1990-05-15', '2020-03-01', 'Analista', 1),
+    ('Sin Asignar', 'a', '@.com', '1990-05-15', '2020-03-01', '', 1),
+    ('Greco', 'Gómez', 'greco.gomez@empresa.com', '1990-05-15', '2020-03-01', 'Analista', 1),
     ('Luis', 'Martínez', 'luis.martinez@empresa.com', '1985-08-22', '2018-06-10', 'Gerente', 2),
     ('Sofía', 'Pérez', 'sofia.perez@empresa.com', '1993-12-02', '2022-01-15', 'Soporte Técnico', 1),
     ('Carlos', 'Ramírez', 'carlos.ramirez@empresa.com', '1980-03-30', '2010-09-20', 'Jefe de Área', 3);
@@ -142,6 +147,15 @@ IF NOT EXISTS (SELECT 1 FROM Sucursales WHERE Nombre = 'Bodega Juan Diaz')
     INSERT INTO Sucursales (Nombre) VALUES ('Bodega Juan Diaz');
 GO
 
+-- Asignar roll
+IF NOT EXISTS (SELECT 1 FROM Usuarios WHERE roll = 'admin')
+BEGIN
+    UPDATE Usuarios
+    SET roll = 'admin'
+    WHERE correo = 'alberto@example.com';
+END;
+GO
+
 -- 7. Triggers (estos no necesitan IF OBJECT_ID, porque los recreás si es necesario)
 IF OBJECT_ID('trg_AgregarActivosFisicos', 'TR') IS NOT NULL
     DROP TRIGGER trg_AgregarActivosFisicos;
@@ -154,14 +168,14 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @ActivoId INT, @Cantidad INT, @i INT = 1;
+    DECLARE @ActivoId INT, @Cantidad INT, @i INT = 1, @FechaExpiracion DATETIME;
 
-    SELECT @ActivoId = id, @Cantidad = StockTotal FROM INSERTED;
+    SELECT @ActivoId = id, @Cantidad = StockTotal, @FechaExpiracion = FechaExpiracion FROM INSERTED;
 
     WHILE @i <= @Cantidad
     BEGIN
-        INSERT INTO ActivosFisicos (ActivoId, SucursalId, NumeroSerie)
-        VALUES (@ActivoId, 1, CONCAT('AUTO-', NEWID()));
+        INSERT INTO ActivosFisicos (ActivoId, SucursalId, NumeroSerie, FechaExpiracion)
+        VALUES (@ActivoId, 1, CONCAT('AUTO-', NEWID()), @FechaExpiracion);
 
         SET @i += 1;
     END

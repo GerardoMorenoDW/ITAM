@@ -1,34 +1,130 @@
-import { Show, SimpleShowLayout, TextField, TabbedShowLayout } from "react-admin";
+import {
+    Show,
+    TabbedShowLayout,
+    useRecordContext,
+} from "react-admin";
+import { Grid2, Typography, Paper, Box, useTheme } from "@mui/material";
+
 import DisponibilidadTable from "./DisponibilidadActivo";
-import ShowActions from "./ShowActions";
 import MovimientosActivos from "./MovimientosActivos";
+import ShowActions from "./ShowActions";
+
+const DescripcionTab = () => {
+    const record = useRecordContext();
+    const theme = useTheme();
+    if (!record) return null;
+
+    return (
+        <Paper
+            elevation={3}
+            sx={{
+                p: 4,
+                borderRadius: 3,
+                backgroundColor: theme.palette.background.paper,
+                color: theme.palette.text.primary,
+            }}
+        >
+            <Grid2 container spacing={4}>
+                {/* Columna izquierda */}
+                <Grid2 item xs={12} sm={6}>
+                    <Box mb={2}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                            ID del Producto
+                        </Typography>
+                        <Typography variant="body1">{record.id}</Typography>
+                    </Box>
+
+                    <Box mb={2}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                            Modelo
+                        </Typography>
+                        <Typography variant="body1">{record.Modelo}</Typography>
+                    </Box>
+
+                    <Box mb={2}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                            Departamento
+                        </Typography>
+                        <Typography variant="body1">{record.Departamento}</Typography>
+                    </Box>
+
+                    <Box mb={2}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                            Costo
+                        </Typography>
+                        <Typography
+                            variant="body1"
+                            sx={{ color: theme.palette.success.main }}
+                        >
+                            ${record.Costo}
+                        </Typography>
+                    </Box>
+                </Grid2>
+
+                {/* Columna derecha */}
+                <Grid2 item xs={12} sm={6}>
+                    <Box mb={2}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                            Nombre
+                        </Typography>
+                        <Typography variant="body1">{record.Nombre}</Typography>
+                    </Box>
+
+                    <Box mb={2}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                            Tipo
+                        </Typography>
+                        <Typography variant="body1">{record.Tipo}</Typography>
+                    </Box>
+
+                    <Box mb={2}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                            Proveedor
+                        </Typography>
+                        <Typography variant="body1" color="primary">
+                            {record.Proveedor}
+                        </Typography>
+                    </Box>
+                </Grid2>
+
+                {/* Observaciones en ambas columnas */}
+                <Grid2 item xs={12}>
+                    <Box mt={2}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                            Observaciones
+                        </Typography>
+                        <Typography variant="body1">{record.Observaciones}</Typography>
+                    </Box>
+                </Grid2>
+            </Grid2>
+        </Paper>
+    );
+};
+
 
 
 const ActivosDetail = () => (
-    < Show title='Detalles Del Activo' actions={<ShowActions />}>
+    <Show title="Detalles Del Activo" actions={<ShowActions />}>
         <TabbedShowLayout>
-            <TabbedShowLayout.Tab label="Descripcion">
-                <SimpleShowLayout>
-                    <TextField source="id" />
-                    <TextField source="Nombre" />
-                    <TextField source="Modelo" />
-                    <TextField source="Tipo" />
-                    <TextField source="Departamento" />
-                    <TextField source="Proveedor" />
-                    <TextField source="Costo" />
-                    <TextField source="Observaciones" />
-                </SimpleShowLayout>
+            <TabbedShowLayout.Tab label="Descripción">
+                <DescripcionTab />
             </TabbedShowLayout.Tab>
+
             <TabbedShowLayout.Tab label="Disponibilidad">
-                <h3>Disponibilidad en sucursales</h3>
+                <Typography variant="h6" gutterBottom>
+                    Disponibilidad en sucursales
+                </Typography>
                 <DisponibilidadTable />
             </TabbedShowLayout.Tab>
+
             <TabbedShowLayout.Tab label="Movimientos">
-                <h3>Movimientos del activo</h3>
+                <Typography variant="h6" gutterBottom>
+                    Movimientos del activo
+                </Typography>
                 <MovimientosActivos />
             </TabbedShowLayout.Tab>
         </TabbedShowLayout>
-    </Show >
+    </Show>
 );
 
 export default ActivosDetail;

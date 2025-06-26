@@ -1,56 +1,49 @@
 import {
-  List,
-  Datagrid,
-  TextField,
-  DateField,
-  NumberField,
-  TextInput,
-  SelectInput,
-  EditButton,
-  //Filter,
-} from "react-admin";
-//import {Modal} from './Modal'
-//import FormularioEquipos from './FormularioEquipos';
-import React from 'react';
+    List,
+    Datagrid,
+    TextField,
+    ReferenceField,
+    SelectInput,
+    TextInput,
+    ReferenceInput
+  } from "react-admin";
 
-/* const filtros = [
-  <TextInput label="Buscar" source="q" alwaysOn />,
-  <SelectInput
-    label="Estado"
-    source="Estado"
-    choices={[
-      { id: "DISPONIBLE", name: "DISPONIBLE" },
-      { id: "EN USO", name: "EN USO" },
-      { id: "EN MANTENIMIENTO", name: "EN MANTENIMIENTO" },
-    ]}
-  />,
-  <TextInput label="Departamento" source="departamento" />,
-]; */
+  const filtros = [
+    <TextInput label="Buscar" source="q" alwaysOn />,
+    <SelectInput
+      label="Estado"
+      source="Estado"
+      choices={[
+            { id: "DISPONIBLE", name: "DISPONIBLE" },
+            { id: "EN USO", name: "EN USO" },
+            { id: "EN MANTENIMIENTO", name: "EN MANTENIMIENTO" },
+          ]}
+    />,
+    <ReferenceInput label="Sucursal" source="SucursalId" reference="sucursales" alwaysOn>
+      <SelectInput optionText="Nombre" />
+    </ReferenceInput>,
+    <ReferenceInput label="Empleado" source="Asignado" reference="empleados" alwaysOn>
+      <SelectInput optionText="Nombre" />
+    </ReferenceInput>
+  ];
 
 const ActivosListExp = (props) => {
   return (
-    <List {...props}>
-      <>
-        <Datagrid rowClick="show">
+    <List filters={filtros} perPage={10}>
+      <Datagrid>
+        <TextField source="id" />
+        <TextField source="NombreActivo" />
+        <TextField source="NumeroSerie" />
+        <ReferenceField source="SucursalId" reference="sucursales">
           <TextField source="Nombre" />
-          <TextField source="Marca" />
-          <TextField source="Modelo" />
-          {/* <TextField source="NumeroSerie" /> */}
-          <TextField source="Estatus" />
-          {/* <TextField source="Sucursal" /> */}
-          {/* <TextField source="Departamento" /> */}
-          <TextField source="UsuarioAsignado"/> 
-          <DateField source="FechaAdquisicion" />
-          <DateField source="FechaExpiracion" />
-          <TextField source="Proveedor" />
-          <NumberField source="Costo" options={{ style: 'currency', currency: 'USD' }} />
-          {/* <TextField source="Observaciones" /> */}
-          <NumberField source="StockTotal" />
-          <EditButton />
-        </Datagrid>
-      </>
+        </ReferenceField>
+        <TextField source="Estado" />
+        <ReferenceField label= "Asignado a" source="Asignado" reference="empleados">
+          <TextField source="Nombre" />
+        </ReferenceField>
+      </Datagrid>
     </List>
-  );
+);
 };
 
 export default ActivosListExp;

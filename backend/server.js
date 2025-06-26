@@ -40,11 +40,48 @@ app.get('/', async (req, res) => {
 app.get('/usuarios', async (req, res) => {
   try {
     await sql.connect(config);
-    const result = await sql.query('SELECT * FROM Usuarios');
-    res.send(result.recordset);
+    const result = await sql.query('SELECT id, nombre FROM Usuarios');
+    res.json(result.recordset);
   } catch (err) {
     console.error('Error al conectar a la base de datos:', err);
     res.status(500).send('Error de conexión a SQL Server');
+  }
+});
+
+//Get de Empleados
+app.get('/empleados', async (req, res) => {
+  try {
+    await sql.connect(config);
+    const result = await sql.query('SELECT EmpleadoId as id, Nombre FROM Empleados');
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error al conectar a la base de datos:', err);
+    res.status(500).send('Error de conexión a SQL Server');
+  }
+});
+
+//Get de Empleados
+app.post('/empleados/many', async (req, res) => {
+  try {
+    const ids = req.body.ids;
+
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ message: 'Se esperaba un array de ids' });
+    }
+
+
+    await sql.connect(config);
+    const request = new sql.Request();
+    const idList = ids.join(',');
+
+    const result = await request.query(`
+      SELECT EmpleadoId as id, Nombre, Correo FROM Empleados WHERE EmpleadoId IN (${idList})
+    `);
+
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error en /empleados/many:', err);
+    res.status(500).json({ message: 'Error en el servidor' });
   }
 });
 
@@ -52,7 +89,7 @@ app.get('/usuarios', async (req, res) => {
 // INSERTAR USUARIOS
 
 /* async function insertarUsuarios() {
-  try{
+  try {
     await sql.connect(config);
 
     const usuarios = [
@@ -73,7 +110,7 @@ app.get('/usuarios', async (req, res) => {
 
     console.log('Usuarios insertados con hash');
     sql.close();
-  }catch(error){
+  } catch (error) {
     console.log("Error insertando usuarios")
   }
 }
@@ -81,23 +118,23 @@ insertarUsuarios().catch(console.error); */
 
 //POST Log in de aplicacion
 app.post('/login', async (req, res) => {
-    const { correo, password } = req.body;
-    const pool = await sql.connect(config);
+  const { correo, password } = req.body;
+  const pool = await sql.connect(config);
 
-    const result = await pool.request()
+  const result = await pool.request()
     .input('correo', sql.VarChar, correo)
     .query('SELECT * FROM Usuarios WHERE correo = @correo');
 
-    const usuario = result.recordset[0];
+  const usuario = result.recordset[0];
 
-    if (!usuario) return res.status(401).json({ message: 'Usuario no encontrado' });
+  if (!usuario) return res.status(401).json({ message: 'Usuario no encontrado' });
 
-    const coincide = await bcrypt.compare(password, usuario.password);
+  const coincide = await bcrypt.compare(password, usuario.password);
 
-    if (!coincide) return res.status(401).json({ message: 'Contraseña incorrecta' });
+  if (!coincide) return res.status(401).json({ message: 'Contraseña incorrecta' });
 
-    // Aquí podrías usar JWT. Por ahora, retornamos un objeto simple:
-    res.json({ token: 'mock-token', usuario: { id: usuario.id, nombre: usuario.nombre } });
+  // Aquí podrías usar JWT. Por ahora, retornamos un objeto simple:
+  res.json({ token: 'mock-token', usuario: { id: usuario.id, nombre: usuario.nombre, roll: usuario.roll } });
 });
 
 
@@ -216,8 +253,7 @@ app.get('/disponibilidad/:id', async (req, res) => {
 //Post de Activos
 app.post('/api/activos', async (req, res) => {
   const {
-    Nombre, Marca, Modelo, Tipo, NumeroSerie,
-    Sucursal, Departamento, UsuarioAsignado,
+    Nombre, Marca, Modelo, Tipo, SubCategoria, NumeroSerie, Departamento, UsuarioAsignado,
     FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones, StockTotal
   } = req.body;
 
@@ -225,11 +261,11 @@ app.post('/api/activos', async (req, res) => {
     await sql.connect(config);
     const result = await sql.query`
       INSERT INTO Activos (
-        Nombre, Marca, Modelo, Tipo, NumeroSerie, Departamento, UsuarioAsignado,
+        Nombre, Marca, Modelo, Tipo, SubCategoria, NumeroSerie, Departamento, UsuarioAsignado,
         FechaAdquisicion, FechaExpiracion, Proveedor, Costo, Observaciones, StockTotal
       )
       VALUES (
-        ${Nombre}, ${Marca}, ${Modelo}, ${Tipo}, ${NumeroSerie}, ${Departamento}, ${UsuarioAsignado},
+        ${Nombre}, ${Marca}, ${Modelo}, ${Tipo}, ${SubCategoria}, ${NumeroSerie}, ${Departamento}, ${UsuarioAsignado},
         ${FechaAdquisicion}, ${FechaExpiracion}, ${Proveedor}, ${Costo}, ${Observaciones}, ${StockTotal}
       )
 
@@ -244,6 +280,7 @@ app.post('/api/activos', async (req, res) => {
       Marca,
       Modelo,
       Tipo,
+      SubCategoria,
       NumeroSerie,
       Departamento,
       UsuarioAsignado,
@@ -382,11 +419,11 @@ app.post('/api/movimientos', async (req, res) => {
 })
 
 // get Momivimientos
-app.get('/movimientos/:id', async (req, res)=> {
-  try{
+app.get('/movimientos/:id', async (req, res) => {
+  try {
     const { id } = req.params
     await sql.connect(config);
-    const {recordset} = await sql.query`
+    const { recordset } = await sql.query`
       SELECT m.ActivoId as ActivoId, 
       a.Nombre as NombreActivo,
       (SELECT Nombre FROM Sucursales WHERE id = m.SucursalOrigenId) as SucursalOrigen,
@@ -399,40 +436,62 @@ app.get('/movimientos/:id', async (req, res)=> {
     `;
     res.status(200).json(recordset)
 
-  }catch(error){
+  } catch (error) {
     console.error('Error al obtener activos físicos:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 })
 
 // Compras de activo
-app.put('/api/compras/:id', async (req, res)=> {
-  try{
-    const { id } = req.params
-    const {SucursalId, Cantidad } = req.body;
-    if (id && SucursalId && Cantidad > 0){
+app.put('/api/compras/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { SucursalId, Cantidad } = req.body;
+
+    if (id && SucursalId && Cantidad && Cantidad > 0) {
       await sql.connect(config);
-      const {recordset} = await sql.query`
-        INSERT INTO Compras ( ActivoId, SucursalId, Cantidad )
-        VALUES (${id}, ${SucursalId}, ${Cantidad} );
-      `;
-      await sql.query`
-      UPDATE StockSucursal
-      SET Cantidad = Cantidad + ${Cantidad}
-      WHERE ActivoId = ${id} AND SucursalId = ${SucursalId}
-      `
-      await sql.query`
-      UPDATE Activos
-      SET Cantidad = Cantidad + ${Cantidad}
-      WHERE ActivoId = ${id} AND SucursalId = ${SucursalId}
-      `
-      res.status(200).json(recordset)
+
+      const transaction = new sql.Transaction();
+      await transaction.begin();
+
+      const request = new sql.Request(transaction);
+
+      await request.query(`
+        INSERT INTO Compras (ActivoId, SucursalId, Cantidad)
+        VALUES (${id}, ${SucursalId}, ${Cantidad});
+      `);
+
+      await request.query(`
+        UPDATE StockSucursal
+        SET Cantidad = Cantidad + ${Cantidad}
+        WHERE ActivoId = ${id} AND SucursalId = ${SucursalId};
+      `);
+
+      await request.query(`
+        UPDATE Activos
+        SET StockTotal = StockTotal + ${Cantidad}
+        WHERE id = ${id};
+      `);
+
+      for (let i = 0; i < Cantidad; i++) {
+        await request.query(`
+          INSERT INTO ActivosFisicos (ActivoId, SucursalId, NumeroSerie)
+          VALUES (${id}, ${SucursalId}, CONCAT('AUTO-', NEWID()));
+        `);
+      }
+
+      await transaction.commit();
+      res.status(200).json({ message: 'Compra registrada correctamente' });
+
+    } else {
+      res.status(400).json({ error: 'Datos inválidos o incompletos' });
     }
-  }catch(error){
-    console.error('Error al obtener activos físicos:', error);
+  } catch (error) {
+    console.error('Error al registrar compra:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
-})
+});
+
 
 /* ---------------------- ACTIVOS FISICOS -------------------------------- */
 // GET DE ACTIVOS FISICOS
@@ -446,11 +505,19 @@ app.get('/activos-fisicos', async (req, res) => {
     const end = req.query._end ? parseInt(req.query._end) : null;
     const limit = end !== null ? end - start : 1000;
 
-    const filters = req.query.filter ? JSON.parse(req.query.filter) : {};
+    const reservedKeys = ['_start', '_end', '_order', '_sort']; // Claves propias de React Admin
+    const filters = {};
+
+    for (const key in req.query) {
+      if (!reservedKeys.includes(key)) {
+        filters[key] = req.query[key];
+      }
+    }
 
     let whereClauses = [];
     let inputParams = {};
     let i = 0;
+
 
     for (const campo in filters) {
       const paramName = `param${i}`;
@@ -514,7 +581,8 @@ app.get('/activos-fisicos', async (req, res) => {
 
     const total = countResult.recordset[0].total;
 
-    res.setHeader('Content-Range', `activos-fisicos ${start}-${start + result.recordset.length}/${total}`);
+    const endRange = result.recordset.length > 0 ? start + result.recordset.length - 1 : start;
+    res.setHeader('Content-Range', `activos-fisicos ${start}-${endRange}/${total}`);
     res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
     res.json(result.recordset);
   } catch (err) {
@@ -546,7 +614,7 @@ app.get('/activos-fisicos/:id', async (req, res) => {
 // Put de Activos Fisicos
 app.put('/activos-fisicos/:id', async (req, res) => {
   const { id } = req.params;
-  const { NumeroSerie, Estado, SucursalId } = req.body;
+  const { NumeroSerie, Estado, SucursalId, Asignado } = req.body;
   console.timeLog(id)
 
   try {
@@ -555,15 +623,17 @@ app.put('/activos-fisicos/:id', async (req, res) => {
       .input('id', sql.Int, id)
       .input('NumeroSerie', sql.NVarChar, NumeroSerie)
       .input('Estado', sql.NVarChar, Estado)
+      .input('Asignado', sql.Int, Asignado)
       .input('SucursalId', sql.Int, SucursalId)
       .query(`
         UPDATE ActivosFisicos
         SET NumeroSerie = @NumeroSerie,
             Estado = @Estado,
-            SucursalId = @SucursalId
+            SucursalId = @SucursalId,
+            Asignado = @Asignado
         WHERE id = @id
       `);
-    res.json({ id, NumeroSerie, Estado, SucursalId });
+    res.json({ id, NumeroSerie, Estado, SucursalId, Asignado });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error updating activo físico' });
@@ -589,18 +659,18 @@ app.get('/activos-fisicos-estados', async (req, res) => {
 //Grafica de compras por mes
 
 app.get('/compras-por-mes', async (req, res) => {
-    try {
-        const anio = parseInt(req.query.anio);
+  try {
+    const anio = parseInt(req.query.anio);
 
-        if (isNaN(anio)) {
-            return res.status(400).json({ error: "Año inválido" });
-        }
+    if (isNaN(anio)) {
+      return res.status(400).json({ error: "Año inválido" });
+    }
 
-        await sql.connect(config);
-        const request = new sql.Request();
-        request.input('anio', sql.Int, anio);
+    await sql.connect(config);
+    const request = new sql.Request();
+    request.input('anio', sql.Int, anio);
 
-        const result = await request.query(`
+    const result = await request.query(`
             SELECT 
                 MONTH(t1.FechaRegistro) AS Mes,
                 YEAR(t1.FechaRegistro) AS Año,
@@ -612,14 +682,112 @@ app.get('/compras-por-mes', async (req, res) => {
             ORDER BY Mes
         `);
 
-        res.json(result.recordset);
-    } catch (err) {
-        console.error("Error obteniendo compras por mes:", err);
-        res.status(500).json({ error: "Error interno del servidor" });
-    }
+    res.json(result.recordset);
+  } catch (err) {
+    console.error("Error obteniendo compras por mes:", err);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
 });
 
+// GET DE ACTIVOS FISICOS Expiracion proxima
+app.get('/activos-fisicos-expiracion', async (req, res) => {
+  try {
+    await sql.connect(config);
 
+    const sortField = req.query._sort || 'af.Id';
+    const sortOrder = req.query._order || 'ASC';
+    const start = req.query._start ? parseInt(req.query._start) : 0;
+    const end = req.query._end ? parseInt(req.query._end) : null;
+    const limit = end !== null ? end - start : 1000;
+
+    const reservedKeys = ['_start', '_end', '_order', '_sort']; // Claves propias de React Admin
+    const filters = {};
+
+    for (const key in req.query) {
+      if (!reservedKeys.includes(key)) {
+        filters[key] = req.query[key];
+      }
+    }
+
+    let whereClauses = [];
+    let inputParams = {};
+    let i = 0;
+
+
+    for (const campo in filters) {
+      const paramName = `param${i}`;
+
+      if (campo === "q") {
+        whereClauses.push(`(a.Nombre LIKE @${paramName} OR af.NumeroSerie LIKE @${paramName})`);
+        inputParams[paramName] = `%${filters[campo]}%`;
+      } else if (campo === "Estado") {
+        whereClauses.push(`af.Estado = @${paramName}`);
+        inputParams[paramName] = filters[campo];
+      } else if (campo === "departamento") {
+        whereClauses.push(`af.Departamento = @${paramName}`);
+        inputParams[paramName] = filters[campo];
+      } else if (campo === "SucursalId") {
+        whereClauses.push(`af.SucursalId = @${paramName}`);
+        inputParams[paramName] = filters[campo];
+      } else {
+        whereClauses.push(`af.${campo} = @${paramName}`);
+        inputParams[paramName] = filters[campo];
+      }
+      i++;
+    }
+
+    let baseQuery = `
+      SELECT af.*, a.Nombre AS NombreActivo, s.Nombre AS NombreSucursal
+      FROM ActivosFisicos af
+      JOIN Activos a ON af.ActivoId = a.Id
+      JOIN Sucursales s ON af.SucursalId = s.Id
+    `;
+
+    if (whereClauses.length > 0) {
+      baseQuery += ` WHERE ${whereClauses.join(' AND ')}`;
+    }
+
+    const queryWithPagination = `
+      ${baseQuery}
+      AND MONTH(af.FechaExpiracion) = MONTH(GETDATE())
+      AND YEAR(af.FechaExpiracion) = YEAR(GETDATE())
+      ORDER BY ${sortField} ${sortOrder}
+      OFFSET ${start} ROWS FETCH NEXT ${limit} ROWS ONLY
+    `;
+
+    const request = new sql.Request();
+    for (const key in inputParams) {
+      request.input(key, sql.VarChar, inputParams[key]);
+    }
+
+    const result = await request.query(queryWithPagination);
+
+    // Total con filtros
+    const countRequest = new sql.Request();
+    for (const key in inputParams) {
+      countRequest.input(key, sql.VarChar, inputParams[key]);
+    }
+
+    const countResult = await countRequest.query(`
+      SELECT COUNT(*) AS total
+      FROM ActivosFisicos af
+      JOIN Activos a ON af.ActivoId = a.Id
+      JOIN Sucursales s ON af.SucursalId = s.Id
+      ${whereClauses.length > 0 ? 'WHERE ' + whereClauses.join(' AND ') : ''}
+      ${whereClauses.length > 0 ? 'AND MONTH(af.FechaExpiracion) = MONTH(GETDATE()) AND YEAR(af.FechaExpiracion) = YEAR(GETDATE())' : ''}
+    `);
+
+    const total = countResult.recordset[0].total;
+
+    const endRange = result.recordset.length > 0 ? start + result.recordset.length - 1 : start;
+    res.setHeader('Content-Range', `activos-fisicos ${start}-${endRange}/${total}`);
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error al obtener activos físicos:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
 
 /* ------------------------------------------------------------------------------------- */
 

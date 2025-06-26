@@ -37,7 +37,10 @@ const authProvider = {
         return Promise.resolve({ id: usuario?.id, fullName: usuario?.nombre });
     },
 
-    getPermissions: () => Promise.resolve(),
+    getPermissions: () => {
+    const user = JSON.parse(localStorage.getItem('usuario'));
+    return Promise.resolve(user?.roll); // Devuelve 'admin' o lo que tengas
+    },
 };
 
 export default authProvider;

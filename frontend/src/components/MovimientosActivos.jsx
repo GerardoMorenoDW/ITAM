@@ -51,7 +51,7 @@ const ShowMovimientos = () => {
                     <tr>
                         <th style={{ border: "1px solid #ccc", padding: "8px" }}>Sucursal Origen</th>
                         <th style={{ border: "1px solid #ccc", padding: "8px" }}>Sucursal Destino </th>
-                        <th style={{ border: "1px solid #ccc", padding: "8px" }}>Disponible</th>
+                        <th style={{ border: "1px solid #ccc", padding: "8px" }}>Cantidad</th>
                         <th style={{ border: "1px solid #ccc", padding: "8px" }}>Fecha de Movimiento</th>
                     </tr>
                 </thead>
