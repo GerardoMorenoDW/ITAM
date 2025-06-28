@@ -38,8 +38,8 @@ const authProvider = {
     },
 
     getPermissions: () => {
-    const user = JSON.parse(localStorage.getItem('usuario'));
-    return Promise.resolve(user?.roll); // Devuelve 'admin' o lo que tengas
+    const usuario = JSON.parse(localStorage.getItem('usuario'));
+    return Promise.resolve(usuario?.roll); // Devuelve 'admin' o lo que tengas
     },
 };
 

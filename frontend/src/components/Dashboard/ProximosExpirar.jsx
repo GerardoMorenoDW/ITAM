@@ -4,12 +4,15 @@ import {
     TextField,
     ReferenceField,
     SelectInput,
-    TextInput,
-    ReferenceInput
+    //TextInput,
+    ReferenceInput,
+    DateField,
+    FunctionField,
+    Pagination
   } from "react-admin";
 
   const filtros = [
-    <TextInput label="Buscar" source="q" alwaysOn />,
+    //<TextInput label="Buscar" source="q" alwaysOn />,
     <SelectInput
       label="Estado"
       source="Estado"
@@ -27,10 +30,13 @@ import {
     </ReferenceInput>
   ];
 
+const PostPagination = () => <Pagination rowsPerPageOptions={[5, 10, 25, 50]} />;
+
 const ActivosListExp = (props) => {
   return (
-    <List filters={filtros} perPage={10}>
-      <Datagrid>
+    <List filters={filtros} pagination={<PostPagination />}>
+      <h3>Activos con fecha de expiracion/mantenimiento del mes</h3>
+      <Datagrid bulkActionButtons={false}>
         <TextField source="id" />
         <TextField source="NombreActivo" />
         <TextField source="NumeroSerie" />
@@ -41,6 +47,16 @@ const ActivosListExp = (props) => {
         <ReferenceField label= "Asignado a" source="Asignado" reference="empleados">
           <TextField source="Nombre" />
         </ReferenceField>
+        <FunctionField
+          label="Fecha Mant/exp"
+          render={(record) => 
+            record.FechaMantenimiento == null ? (
+              <DateField record={record} source="FechaExpiracion" />
+            ) : (
+              <DateField record={record} source="FechaMantenimiento" />
+            )
+          }
+        />
       </Datagrid>
     </List>
 );

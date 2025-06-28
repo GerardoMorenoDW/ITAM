@@ -5,8 +5,9 @@ import { Resource } from "react-admin";
 import AsignarSerie from "./AsignarSerie";
 import ActivosListExp from "./Dashboard/ProximosExpirar";
 
-const Dashboard = () => (
-  <Box sx={{ padding: 4 }}>
+const Dashboard = () => {
+  return(
+  <Box sx={{ padding: 4 }} title="Dashboard ITAM">
     <Typography variant="h4" gutterBottom>
       Bienvenido al Dashboard
     </Typography>
@@ -39,6 +40,6 @@ const Dashboard = () => (
 
     </Grid2>
   </Box>
-);
+)};
 
 export default Dashboard;

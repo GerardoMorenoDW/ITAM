@@ -780,7 +780,7 @@ app.get('/activos-fisicos-expiracion', async (req, res) => {
     const total = countResult.recordset[0].total;
 
     const endRange = result.recordset.length > 0 ? start + result.recordset.length - 1 : start;
-    res.setHeader('Content-Range', `activos-fisicos ${start}-${endRange}/${total}`);
+    res.setHeader('Content-Range', `activos-fisicos-expiracion ${start}-${endRange}/${total}`);
     res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
     res.json(result.recordset);
   } catch (err) {

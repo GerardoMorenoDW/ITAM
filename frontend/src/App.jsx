@@ -25,9 +25,9 @@ function App() {
       <header className="App-header">
       </header>
 
-      <Admin dashboard={Dashboard} authProvider={authProvider} dataProvider={provider}>
-        <Resource name="activos" list={ActivosList} create={ActivosCreate} edit={UpdateActivo} show={ActivosDetail}  />
-        <Resource name="activos-fisicos" list={ActivosFisicosList} edit={AsignarSerie}/>
+      <Admin title="Dashboard ITAM" dashboard={Dashboard} authProvider={authProvider} dataProvider={provider}>
+        <Resource options={{ label: 'Activos Registrados' }} name="activos" list={ActivosList} create={ActivosCreate} edit={UpdateActivo} show={ActivosDetail}  />
+        <Resource options={{ label: 'Activos individuales' }} name="activos-fisicos" list={ActivosFisicosList} edit={<AsignarSerie/>} />
       </Admin>
     </div>
   );

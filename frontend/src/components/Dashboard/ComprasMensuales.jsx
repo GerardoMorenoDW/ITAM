@@ -45,7 +45,7 @@ const ComprasPorMesChart = ({ anio = new Date().getFullYear() }) => {
                     <XAxis dataKey="mes" />
                     <YAxis />
                     <Tooltip formatter={(value) => `$${value}`} />
-                    <Legend style={"font-size: 8px"} />
+                    <Legend style={{fontSize: '8px'}} />
                     <Bar dataKey="compras" fill="#8884d8" name="Compras" />
                 </BarChart>
             </ResponsiveContainer>

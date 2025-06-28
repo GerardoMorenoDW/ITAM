@@ -2,6 +2,7 @@ import {
     Show,
     TabbedShowLayout,
     useRecordContext,
+    usePermissions,
 } from "react-admin";
 import { Grid2, Typography, Paper, Box, useTheme } from "@mui/material";
 
@@ -24,7 +25,7 @@ const DescripcionTab = () => {
                 color: theme.palette.text.primary,
             }}
         >
-            <Grid2 container spacing={4}>
+            <Grid2 container spacing={12} >
                 {/* Columna izquierda */}
                 <Grid2 item xs={12} sm={6}>
                     <Box mb={2}>
@@ -103,8 +104,10 @@ const DescripcionTab = () => {
 
 
 
-const ActivosDetail = () => (
-    <Show title="Detalles Del Activo" actions={<ShowActions />}>
+const ActivosDetail = () => {
+    const {permissions} = usePermissions()
+    return(
+    <Show title="Detalles Del Activo" actions={permissions === 'admin' && <ShowActions />}>
         <TabbedShowLayout>
             <TabbedShowLayout.Tab label="Descripción">
                 <DescripcionTab />
@@ -125,6 +128,7 @@ const ActivosDetail = () => (
             </TabbedShowLayout.Tab>
         </TabbedShowLayout>
     </Show>
-);
+    )
+};
 
 export default ActivosDetail;

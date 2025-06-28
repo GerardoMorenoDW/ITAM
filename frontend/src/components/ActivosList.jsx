@@ -7,10 +7,14 @@ import {
   TextInput,
   SelectInput,
   EditButton,
+  usePermissions,
+  CreateButton,
+  TopToolbar,
+  Pagination,
+  ExportButton,
+  FilterButton
   //Filter,
 } from "react-admin";
-//import {Modal} from './Modal'
-//import FormularioEquipos from './FormularioEquipos';
 import React from 'react';
 
 
@@ -29,19 +33,31 @@ const filtros = [
   <TextInput label="Departamento" source="departamento" />,
 ];
 
-const ActivosList = (props) => {
-  /* const [isModalOpen, setIsModalOpen] = useState(false);
+const ListActions = () => {
+  const { permissions } = usePermissions();
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
- */
   return (
-    <List filters={filtros} {...props}>
+    <TopToolbar>
+      {permissions === 'admin' ? 
+        <>
+          <CreateButton /> 
+          <FilterButton />
+          <ExportButton /> 
+        </>
+      : undefined}
+
+    </TopToolbar>
+  );
+};
+const PostPagination = () => <Pagination rowsPerPageOptions={[5, 10, 25, 50]} />;
+
+const ActivosList = (props) => {
+
+  const { permissions } = usePermissions();
+
+  return (
+    <List filters={filtros} {...props} actions={<ListActions/>} pagination={<PostPagination />}>
       <>
-        {/* <button onClick={openModal}>Agregar Activo</button>
-        <Modal isOpen={isModalOpen} onClose={closeModal}>
-          <FormularioEquipos isOpen={isModalOpen} onClose={closeModal} />
-        </Modal> */}
 
         <Datagrid rowClick="show">
           <TextField source="Nombre" />
@@ -58,7 +74,7 @@ const ActivosList = (props) => {
           <NumberField source="Costo" options={{ style: 'currency', currency: 'USD' }} />
           <TextField source="Observaciones" />
           <NumberField source="StockTotal" />
-          <EditButton />
+          {permissions === 'admin'? <EditButton /> : undefined}
         </Datagrid>
       </>
     </List>

@@ -1,14 +1,25 @@
 import {
   Edit,
   useNotify,
-  //useRedirect,
   useRecordContext,
   ReferenceInput,
   SelectInput,
   TextInput,
-  SimpleForm
+  SimpleForm,
+  DateInput,
 } from "react-admin";
+import { useWatch } from 'react-hook-form';
 import { useEffect, useState } from "react";
+
+const CondicionalFecha = () => {
+  const fechaMantenimiento = useWatch({ name: 'FechaMantenimiento' });
+
+  return fechaMantenimiento == null ? (
+    <DateInput source="FechaExpiracion" />
+  ) : (
+    <DateInput source="FechaMantenimiento" />
+  );
+};
 
 const AsignarSerie = (props) => {
   const notify = useNotify();
@@ -50,7 +61,7 @@ const AsignarSerie = (props) => {
       throw error; // detiene el PUT si algo falla
     }
   };
-
+  
   return (
     <Edit {...props}>
       <SimpleForm validate={handleTransform}>
@@ -72,6 +83,7 @@ const AsignarSerie = (props) => {
             { id: "EN MANTENIMIENTO", name: "EN MANTENIMIENTO" },
           ]}
         />
+        <CondicionalFecha />
       </SimpleForm>
     </Edit>
   );
